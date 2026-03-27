@@ -1,0 +1,17 @@
+# Build output
+target/
+*.class
+*.jar
+*.war
+
+# Secrets — never commit these
+src/main/resources/application-local.properties
+.env
+.env.*
+!.env.example
+
+# IDE
+.idea/
+*.iml
+.vscode/
+*.DS_Store

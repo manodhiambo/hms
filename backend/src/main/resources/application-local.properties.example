@@ -1,0 +1,8 @@
+# Copy this file to application-local.properties and fill in real values.
+# application-local.properties is gitignored — never commit it.
+
+spring.datasource.url=jdbc:postgresql://<host>/neondb?sslmode=require&prepareThreshold=0
+spring.datasource.username=neondb_owner
+spring.datasource.password=REPLACE_ME
+
+jwt.secret=REPLACE_ME_with_a_random_256_bit_hex_string
