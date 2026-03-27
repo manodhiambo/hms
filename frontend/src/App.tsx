@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { useAuthStore } from './store/authStore';
 import Layout from './components/Layout';
 import ProtectedRoute from './components/ProtectedRoute';
 import LandingPage from './pages/landing/LandingPage';
@@ -28,6 +29,13 @@ import AuditPage from './pages/audit/AuditPage';
 import ServicesPage from './pages/services/ServicesPage';
 import HospitalsPage from './pages/hospitals/HospitalsPage';
 
+// Redirects SUPER_ADMIN away from tenant-only pages
+function SuperAdminGuard({ children }: { children: React.ReactNode }) {
+  const role = useAuthStore((s) => s.role);
+  if (role === 'SUPER_ADMIN') return <Navigate to="/hospitals" replace />;
+  return <>{children}</>;
+}
+
 const queryClient = new QueryClient({
   defaultOptions: { queries: { retry: 1, refetchOnWindowFocus: false } },
 });
@@ -40,7 +48,7 @@ export default function App() {
           <Route path="/" element={<LandingPage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route element={<ProtectedRoute><Layout /></ProtectedRoute>}>
-            <Route path="/dashboard" element={<DashboardPage />} />
+            <Route path="/dashboard" element={<SuperAdminGuard><DashboardPage /></SuperAdminGuard>} />
             <Route path="/my-queue" element={<DoctorQueuePage />} />
             <Route path="/patients" element={<PatientsPage />} />
             <Route path="/patients/:id" element={<PatientDetailPage />} />

@@ -28,7 +28,7 @@ export default function LoginPage() {
     try {
       const { data } = await authApi.login(email, password);
       login(data.data);
-      navigate('/dashboard');
+      navigate(data.data.role === 'SUPER_ADMIN' ? '/hospitals' : '/dashboard');
     } catch (err: any) {
       const msg = err?.response?.data?.message;
       setError(msg || 'Invalid email or password. Please try again.');
