@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   Building2, CheckCircle2, XCircle, Clock, LogIn,
-  Search, Eye, EyeOff
+  Search, Eye, EyeOff, Plus, X, Loader2
 } from 'lucide-react';
 import { hospitalApi } from '../../api/services';
 import { useAuthStore } from '../../store/authStore';
@@ -23,14 +23,31 @@ const statusIcon: Record<SubscriptionStatus, React.FC<{ className?: string }>> =
   DEACTIVATED: XCircle,
 };
 
+interface RegForm {
+  name: string; email: string; phone: string;
+  contactPerson: string; county: string; address: string;
+  adminName: string; adminEmail: string; adminPassword: string;
+}
+const emptyForm: RegForm = {
+  name: '', email: '', phone: '', contactPerson: '',
+  county: '', address: '', adminName: '', adminEmail: '', adminPassword: '',
+};
+
 export default function HospitalsPage() {
   const qc = useQueryClient();
   const navigate = useNavigate();
   const authLogin = useAuthStore((s) => s.login);
+
   const [search, setSearch] = useState('');
   const [notes, setNotes] = useState('');
   const [actionTarget, setActionTarget] = useState<{ id: number; action: 'activate' | 'deactivate' } | null>(null);
   const [expandedId, setExpandedId] = useState<number | null>(null);
+
+  // Register modal
+  const [showRegister, setShowRegister] = useState(false);
+  const [form, setForm] = useState<RegForm>(emptyForm);
+  const [regError, setRegError] = useState('');
+  const [showAdminPw, setShowAdminPw] = useState(false);
 
   const { data, isLoading } = useQuery({
     queryKey: ['hospitals'],
@@ -49,9 +66,19 @@ export default function HospitalsPage() {
 
   const impersonateMut = useMutation({
     mutationFn: (id: number) => hospitalApi.impersonate(id).then(r => r.data.data),
-    onSuccess: (authData) => {
-      authLogin(authData);
-      navigate('/dashboard');
+    onSuccess: (authData) => { authLogin(authData); navigate('/dashboard'); },
+  });
+
+  const registerMut = useMutation({
+    mutationFn: () => hospitalApi.register(form),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['hospitals'] });
+      setShowRegister(false);
+      setForm(emptyForm);
+      setRegError('');
+    },
+    onError: (err: any) => {
+      setRegError(err?.response?.data?.message || 'Registration failed. Please try again.');
     },
   });
 
@@ -60,7 +87,7 @@ export default function HospitalsPage() {
     h.email?.toLowerCase().includes(search.toLowerCase())
   );
 
-  const confirm = () => {
+  const confirmAction = () => {
     if (!actionTarget) return;
     if (actionTarget.action === 'activate') activateMut.mutate({ id: actionTarget.id, notes });
     else deactivateMut.mutate({ id: actionTarget.id, notes });
@@ -72,8 +99,12 @@ export default function HospitalsPage() {
     return Math.max(0, Math.ceil(diff / 86400000));
   };
 
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) =>
+    setForm(f => ({ ...f, [e.target.name]: e.target.value }));
+
   return (
-    <div className="p-6 max-w-7xl mx-auto">
+    <div>
+      {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
@@ -81,7 +112,12 @@ export default function HospitalsPage() {
           </h1>
           <p className="text-gray-500 text-sm mt-1">Manage tenant hospitals, subscriptions, and access</p>
         </div>
-        <div className="text-sm text-gray-500">{hospitals.length} hospitals</div>
+        <button
+          onClick={() => { setShowRegister(true); setRegError(''); }}
+          className="flex items-center gap-2 bg-primary-600 hover:bg-primary-700 text-white px-4 py-2 rounded-xl text-sm font-semibold transition-colors"
+        >
+          <Plus className="w-4 h-4" /> Add Hospital
+        </button>
       </div>
 
       {/* Search */}
@@ -90,10 +126,11 @@ export default function HospitalsPage() {
         <input
           value={search} onChange={e => setSearch(e.target.value)}
           placeholder="Search by name or email…"
-          className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-primary-500/30 focus:border-primary-500 outline-none"
+          className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-primary-500/30 focus:border-primary-500 outline-none bg-white"
         />
       </div>
 
+      {/* List */}
       {isLoading ? (
         <div className="text-center py-20 text-gray-400">Loading hospitals…</div>
       ) : hospitals.length === 0 ? (
@@ -126,7 +163,7 @@ export default function HospitalsPage() {
                     <button
                       onClick={() => impersonateMut.mutate(h.id)}
                       disabled={!h.active || impersonateMut.isPending}
-                      title="Login as this hospital"
+                      title="Login as this hospital's admin"
                       className="flex items-center gap-1 text-xs bg-indigo-50 text-indigo-700 hover:bg-indigo-100 px-3 py-1.5 rounded-lg transition-colors disabled:opacity-40"
                     >
                       <LogIn className="w-3.5 h-3.5" /> Impersonate
@@ -170,13 +207,11 @@ export default function HospitalsPage() {
         </div>
       )}
 
-      {/* Action Modal */}
+      {/* ── Activate / Deactivate Modal ── */}
       {actionTarget && (
         <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl shadow-2xl max-w-sm w-full p-6">
-            <h3 className="text-lg font-bold text-gray-900 mb-1 capitalize">
-              {actionTarget.action} Hospital
-            </h3>
+            <h3 className="text-lg font-bold text-gray-900 mb-1 capitalize">{actionTarget.action} Hospital</h3>
             <p className="text-sm text-gray-500 mb-4">
               {actionTarget.action === 'activate'
                 ? 'This will activate the hospital and set subscription to ACTIVE (1 year from now).'
@@ -195,10 +230,96 @@ export default function HospitalsPage() {
                 className="flex-1 py-2.5 border border-gray-200 rounded-xl text-sm font-semibold text-gray-700 hover:bg-gray-50">
                 Cancel
               </button>
-              <button onClick={confirm}
+              <button onClick={confirmAction}
                 disabled={activateMut.isPending || deactivateMut.isPending}
                 className={`flex-1 py-2.5 rounded-xl text-sm font-semibold text-white transition-colors disabled:opacity-60 ${actionTarget.action === 'activate' ? 'bg-emerald-600 hover:bg-emerald-700' : 'bg-red-600 hover:bg-red-700'}`}>
                 {activateMut.isPending || deactivateMut.isPending ? 'Processing…' : `Confirm ${actionTarget.action}`}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Register Hospital Modal ── */}
+      {showRegister && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
+              <h3 className="text-lg font-bold text-gray-900">Register New Hospital</h3>
+              <button onClick={() => setShowRegister(false)} className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center hover:bg-gray-200">
+                <X className="w-4 h-4 text-gray-500" />
+              </button>
+            </div>
+
+            <div className="px-6 py-4 space-y-4">
+              <p className="text-xs text-gray-500">Hospital will start on a 5-day free trial.</p>
+
+              <div className="space-y-3">
+                <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Hospital Details</p>
+                {[
+                  { name: 'name', label: 'Hospital Name', placeholder: 'e.g. Nairobi General Hospital' },
+                  { name: 'email', label: 'Hospital Email', placeholder: 'e.g. info@hospital.co.ke' },
+                  { name: 'phone', label: 'Phone', placeholder: 'e.g. 0712345678' },
+                  { name: 'contactPerson', label: 'Contact Person', placeholder: 'e.g. Dr. Jane Doe' },
+                  { name: 'county', label: 'County', placeholder: 'e.g. Nairobi' },
+                  { name: 'address', label: 'Address', placeholder: 'e.g. Hospital Rd, Nairobi' },
+                ].map(f => (
+                  <div key={f.name}>
+                    <label className="block text-xs font-medium text-gray-600 mb-1">{f.label}</label>
+                    <input
+                      name={f.name}
+                      value={(form as any)[f.name]}
+                      onChange={handleChange}
+                      placeholder={f.placeholder}
+                      className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-primary-500/30 focus:border-primary-500"
+                    />
+                  </div>
+                ))}
+              </div>
+
+              <div className="space-y-3 pt-2">
+                <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Admin Account</p>
+                <div>
+                  <label className="block text-xs font-medium text-gray-600 mb-1">Admin Full Name</label>
+                  <input name="adminName" value={form.adminName} onChange={handleChange}
+                    placeholder="e.g. John Mwangi"
+                    className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-primary-500/30 focus:border-primary-500" />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-600 mb-1">Admin Email</label>
+                  <input name="adminEmail" value={form.adminEmail} onChange={handleChange}
+                    placeholder="e.g. admin@hospital.co.ke"
+                    className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-primary-500/30 focus:border-primary-500" />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-600 mb-1">Admin Password</label>
+                  <div className="relative">
+                    <input name="adminPassword" value={form.adminPassword} onChange={handleChange}
+                      type={showAdminPw ? 'text' : 'password'}
+                      placeholder="Set a strong password"
+                      className="w-full px-3 py-2 pr-10 border border-gray-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-primary-500/30 focus:border-primary-500" />
+                    <button type="button" onClick={() => setShowAdminPw(p => !p)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400">
+                      {showAdminPw ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {regError && <p className="text-sm text-red-600 bg-red-50 px-3 py-2 rounded-lg">{regError}</p>}
+            </div>
+
+            <div className="flex gap-3 px-6 py-4 border-t border-gray-100">
+              <button onClick={() => setShowRegister(false)}
+                className="flex-1 py-2.5 border border-gray-200 rounded-xl text-sm font-semibold text-gray-700 hover:bg-gray-50">
+                Cancel
+              </button>
+              <button
+                onClick={() => registerMut.mutate()}
+                disabled={registerMut.isPending || !form.name || !form.adminEmail || !form.adminPassword}
+                className="flex-1 py-2.5 bg-primary-600 hover:bg-primary-700 text-white rounded-xl text-sm font-semibold transition-colors disabled:opacity-60 flex items-center justify-center gap-2"
+              >
+                {registerMut.isPending ? <><Loader2 className="w-4 h-4 animate-spin" /> Registering…</> : 'Register Hospital'}
               </button>
             </div>
           </div>
