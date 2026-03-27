@@ -1,0 +1,784 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Hospital Management System — User Manual</title>
+<style>
+  :root {
+    --primary: #1877F2;
+    --primary-light: #e8f0fe;
+    --gray-900: #111827;
+    --gray-700: #374151;
+    --gray-500: #6b7280;
+    --gray-200: #e5e7eb;
+    --gray-50: #f9fafb;
+    --green: #059669;
+    --red: #dc2626;
+    --yellow: #d97706;
+    --purple: #7c3aed;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Segoe UI', Arial, sans-serif;
+    font-size: 13px;
+    color: var(--gray-700);
+    line-height: 1.7;
+    background: #fff;
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 40px 48px;
+  }
+
+  /* ── Cover page ── */
+  .cover {
+    text-align: center;
+    padding: 60px 0 80px;
+    border-bottom: 3px solid var(--primary);
+    margin-bottom: 60px;
+    page-break-after: always;
+  }
+  .cover .logo-circle {
+    width: 80px; height: 80px;
+    border-radius: 50%;
+    background: var(--primary);
+    display: inline-flex; align-items: center; justify-content: center;
+    margin-bottom: 24px;
+  }
+  .cover .logo-circle svg { width: 40px; height: 40px; fill: #fff; }
+  .cover h1 { font-size: 32px; font-weight: 800; color: var(--gray-900); margin-bottom: 8px; }
+  .cover h2 { font-size: 18px; font-weight: 400; color: var(--gray-500); margin-bottom: 32px; }
+  .cover .meta { font-size: 12px; color: var(--gray-500); }
+  .cover .meta strong { color: var(--gray-700); }
+
+  /* ── TOC ── */
+  .toc { page-break-after: always; margin-bottom: 60px; }
+  .toc h2 { font-size: 20px; font-weight: 700; color: var(--gray-900); border-bottom: 2px solid var(--primary); padding-bottom: 8px; margin-bottom: 20px; }
+  .toc ol { padding-left: 20px; }
+  .toc li { margin: 6px 0; font-size: 13px; }
+  .toc a { color: var(--primary); text-decoration: none; }
+  .toc a:hover { text-decoration: underline; }
+  .toc .sub { padding-left: 20px; list-style-type: lower-alpha; margin-top: 4px; }
+
+  /* ── Sections ── */
+  section { margin-bottom: 48px; page-break-inside: avoid; }
+  section:not(:first-child) { border-top: 1px solid var(--gray-200); padding-top: 40px; }
+
+  h2.section-title {
+    font-size: 20px; font-weight: 700; color: var(--gray-900);
+    display: flex; align-items: center; gap: 10px;
+    margin-bottom: 16px;
+  }
+  h2.section-title .num {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 30px; height: 30px; border-radius: 50%;
+    background: var(--primary); color: #fff;
+    font-size: 14px; font-weight: 700; shrink: 0;
+  }
+
+  h3 { font-size: 15px; font-weight: 600; color: var(--gray-900); margin: 20px 0 8px; }
+  h4 { font-size: 13px; font-weight: 600; color: var(--gray-700); margin: 14px 0 6px; }
+
+  p { margin-bottom: 10px; }
+
+  ul, ol { padding-left: 22px; margin-bottom: 12px; }
+  li { margin-bottom: 4px; }
+
+  /* ── Info boxes ── */
+  .box {
+    border-left: 4px solid;
+    padding: 12px 16px;
+    border-radius: 0 8px 8px 0;
+    margin: 14px 0;
+    font-size: 12.5px;
+  }
+  .box.tip   { border-color: var(--primary); background: var(--primary-light); }
+  .box.warn  { border-color: var(--yellow);  background: #fef9c3; }
+  .box.info  { border-color: var(--green);   background: #ecfdf5; }
+  .box strong { font-weight: 700; }
+
+  /* ── Step list ── */
+  .steps { counter-reset: step; list-style: none; padding: 0; }
+  .steps li {
+    counter-increment: step;
+    display: flex; gap: 12px;
+    margin-bottom: 12px;
+    page-break-inside: avoid;
+  }
+  .steps li::before {
+    content: counter(step);
+    display: inline-flex; align-items: center; justify-content: center;
+    min-width: 24px; height: 24px;
+    border-radius: 50%;
+    background: var(--primary); color: #fff;
+    font-size: 11px; font-weight: 700;
+    margin-top: 2px;
+  }
+
+  /* ── Role badge ── */
+  .role {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 20px;
+    font-size: 11px; font-weight: 600;
+    background: var(--primary-light); color: var(--primary);
+    margin: 0 2px;
+  }
+  .role.admin  { background: #fce7f3; color: #be185d; }
+  .role.nurse  { background: #fef3c7; color: #92400e; }
+  .role.lab    { background: #ede9fe; color: #6d28d9; }
+  .role.pharm  { background: #d1fae5; color: #065f46; }
+  .role.acct   { background: #e0f2fe; color: #0369a1; }
+
+  /* ── Table ── */
+  table { width: 100%; border-collapse: collapse; margin: 14px 0; font-size: 12px; }
+  th { background: var(--primary); color: #fff; padding: 8px 10px; text-align: left; font-weight: 600; }
+  td { padding: 7px 10px; border-bottom: 1px solid var(--gray-200); vertical-align: top; }
+  tr:nth-child(even) td { background: var(--gray-50); }
+
+  /* ── Screenshot placeholder ── */
+  .screen {
+    border: 1.5px solid var(--gray-200);
+    border-radius: 10px;
+    padding: 12px 16px;
+    background: var(--gray-50);
+    margin: 12px 0;
+    font-size: 12px;
+    color: var(--gray-500);
+  }
+
+  /* ── Print ── */
+  @media print {
+    body { padding: 20px 28px; font-size: 12px; }
+    .cover { padding: 40px 0 60px; }
+    .no-print { display: none; }
+    a { color: inherit; text-decoration: none; }
+    section { page-break-inside: auto; }
+  }
+
+  /* ── Print button ── */
+  .print-btn {
+    position: fixed; top: 20px; right: 24px;
+    background: var(--primary); color: #fff;
+    border: none; padding: 10px 18px; border-radius: 8px;
+    font-size: 13px; font-weight: 600; cursor: pointer;
+    box-shadow: 0 2px 8px rgba(0,0,0,.15);
+    display: flex; align-items: center; gap-8px;
+  }
+  .print-btn:hover { background: #1565c0; }
+</style>
+</head>
+<body>
+
+<button class="print-btn no-print" onclick="window.print()">🖨 Print / Save as PDF</button>
+
+<!-- ══════════════════════════════════════ COVER ══════════════════════════════════════ -->
+<div class="cover">
+  <div class="logo-circle">
+    <svg viewBox="0 0 24 24"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2zm1 14h-2v-2h2v2zm0-4h-2V7h2v5z"/></svg>
+  </div>
+  <h1>Hospital Management System</h1>
+  <h2>Complete User Manual</h2>
+  <p style="font-size:14px;color:#374151;max-width:520px;margin:0 auto 32px;">
+    This manual covers every module of the HMS — from patient registration through billing, lab, pharmacy, wards and reports — giving every staff member the guidance needed to work efficiently.
+  </p>
+  <div class="meta">
+    <strong>Version:</strong> 1.0 &nbsp;|&nbsp;
+    <strong>Developed by:</strong> Helvino Technologies Limited &nbsp;|&nbsp;
+    <strong>Support:</strong> helvino.org | 0703 445 756
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════ TOC ══════════════════════════════════════ -->
+<div class="toc">
+  <h2>Table of Contents</h2>
+  <ol>
+    <li><a href="#sec1">System Overview & Roles</a></li>
+    <li><a href="#sec2">Logging In & Navigation</a></li>
+    <li><a href="#sec3">Dashboard</a></li>
+    <li><a href="#sec4">Patient Management</a>
+      <ol class="sub">
+        <li><a href="#sec4a">Register a Patient</a></li>
+        <li><a href="#sec4b">Search for a Patient</a></li>
+        <li><a href="#sec4c">Edit Patient Record</a></li>
+      </ol>
+    </li>
+    <li><a href="#sec5">Appointments</a></li>
+    <li><a href="#sec6">Triage Queue</a></li>
+    <li><a href="#sec7">Consultations (Visits)</a>
+      <ol class="sub">
+        <li><a href="#sec7a">Create a New Visit</a></li>
+        <li><a href="#sec7b">Clinical Notes & Vitals</a></li>
+        <li><a href="#sec7c">Prescriptions</a></li>
+        <li><a href="#sec7d">Lab Orders</a></li>
+        <li><a href="#sec7e">Imaging Orders</a></li>
+        <li><a href="#sec7f">Completing a Visit</a></li>
+      </ol>
+    </li>
+    <li><a href="#sec8">Pharmacy</a>
+      <ol class="sub">
+        <li><a href="#sec8a">Drug Inventory</a></li>
+        <li><a href="#sec8b">Dispensing Prescriptions</a></li>
+        <li><a href="#sec8c">Refunds</a></li>
+      </ol>
+    </li>
+    <li><a href="#sec9">Laboratory</a></li>
+    <li><a href="#sec10">Imaging (Radiology)</a></li>
+    <li><a href="#sec11">Billing & Payments</a>
+      <ol class="sub">
+        <li><a href="#sec11a">Create an Invoice</a></li>
+        <li><a href="#sec11b">Add Services</a></li>
+        <li><a href="#sec11c">Record a Payment</a></li>
+        <li><a href="#sec11d">Insurance</a></li>
+      </ol>
+    </li>
+    <li><a href="#sec12">Wards & Admissions</a></li>
+    <li><a href="#sec13">Insurance Claims</a></li>
+    <li><a href="#sec14">Reports</a></li>
+    <li><a href="#sec15">User Management</a></li>
+    <li><a href="#sec16">Settings</a></li>
+    <li><a href="#sec17">Notifications</a></li>
+    <li><a href="#sec18">Troubleshooting & Support</a></li>
+  </ol>
+</div>
+
+<!-- ══════════════════════════════════════ SECTION 1 ══════════════════════════════════════ -->
+<section id="sec1">
+  <h2 class="section-title"><span class="num">1</span> System Overview &amp; Roles</h2>
+  <p>The Hospital Management System (HMS) is a web-based platform that streamlines all clinical and administrative operations — from patient registration and clinical consultations to billing, laboratory, pharmacy, and management reports.</p>
+
+  <h3>User Roles</h3>
+  <p>Access to modules is controlled by user roles. Each staff member is assigned exactly one role:</p>
+  <table>
+    <tr><th>Role</th><th>Badge</th><th>Primary Access</th></tr>
+    <tr><td>Super Admin</td><td><span class="role admin">SUPER_ADMIN</span></td><td>Full access to all modules including data management and audit logs</td></tr>
+    <tr><td>Hospital Admin</td><td><span class="role admin">HOSPITAL_ADMIN</span></td><td>All modules except system-level data tools</td></tr>
+    <tr><td>Doctor</td><td><span class="role">DOCTOR</span></td><td>Consultations, prescriptions, lab &amp; imaging orders</td></tr>
+    <tr><td>Nurse</td><td><span class="role nurse">NURSE</span></td><td>Triage, nursing notes, wards, patient check-in</td></tr>
+    <tr><td>Pharmacist</td><td><span class="role pharm">PHARMACIST</span></td><td>Pharmacy inventory, dispensing, prescriptions</td></tr>
+    <tr><td>Lab Technician</td><td><span class="role lab">LAB_TECH</span></td><td>Lab orders queue, processing results</td></tr>
+    <tr><td>Radiologist</td><td><span class="role lab">RADIOLOGIST</span></td><td>Imaging orders queue, completing scans</td></tr>
+    <tr><td>Receptionist</td><td><span class="role nurse">RECEPTIONIST</span></td><td>Patients, appointments, visits check-in</td></tr>
+    <tr><td>Accountant</td><td><span class="role acct">ACCOUNTANT</span></td><td>Billing, payments, insurance claims, reports</td></tr>
+  </table>
+</section>
+
+<!-- ══════════════════════════════════════ SECTION 2 ══════════════════════════════════════ -->
+<section id="sec2">
+  <h2 class="section-title"><span class="num">2</span> Logging In &amp; Navigation</h2>
+
+  <h3>Logging In</h3>
+  <ol class="steps">
+    <li>Open the HMS in your web browser. You will see the login screen.</li>
+    <li>Enter your <strong>Email address</strong> and <strong>Password</strong> provided by your administrator.</li>
+    <li>Click <strong>Sign In</strong>. You will be taken to the Dashboard.</li>
+  </ol>
+
+  <div class="box warn"><strong>Note:</strong> If you forget your password, contact your System Administrator to reset it. Do not share your credentials with colleagues.</div>
+
+  <h3>Navigation Sidebar</h3>
+  <p>The left sidebar contains links to all modules. The modules visible to you depend on your role. Common items include:</p>
+  <ul>
+    <li><strong>Dashboard</strong> — Live KPIs and alerts</li>
+    <li><strong>Patients</strong> — Registration and records</li>
+    <li><strong>Appointments</strong> — Schedule management</li>
+    <li><strong>Triage</strong> — Patient priority queue</li>
+    <li><strong>Consultations</strong> — Clinical visits</li>
+    <li><strong>Pharmacy</strong> — Drug inventory &amp; dispensing</li>
+    <li><strong>Laboratory</strong> — Test orders &amp; results</li>
+    <li><strong>Imaging</strong> — Radiology orders</li>
+    <li><strong>Billing</strong> — Invoices &amp; payments</li>
+    <li><strong>Wards</strong> — Admissions &amp; nursing</li>
+    <li><strong>Reports</strong> — Financial &amp; clinical reports</li>
+    <li><strong>Settings</strong> — Hospital profile (Admin only)</li>
+  </ul>
+
+  <div class="box tip"><strong>Tip:</strong> Click the bell icon in the top bar to see unread notifications. Your profile icon shows your name and role.</div>
+</section>
+
+<!-- ══════════════════════════════════════ SECTION 3 ══════════════════════════════════════ -->
+<section id="sec3">
+  <h2 class="section-title"><span class="num">3</span> Dashboard</h2>
+  <p>The Dashboard provides a real-time overview of hospital operations for the current day.</p>
+
+  <h3>KPI Cards (top row)</h3>
+  <table>
+    <tr><th>Card</th><th>Description</th></tr>
+    <tr><td>Patients Today</td><td>Number of new patients registered or visits created today</td></tr>
+    <tr><td>Appointments</td><td>Total appointments scheduled for today</td></tr>
+    <tr><td>Today's Revenue</td><td>Sum of all payments received today (KES)</td></tr>
+    <tr><td>Bed Occupancy</td><td>Percentage of beds currently occupied</td></tr>
+  </table>
+
+  <h3>Visits by Department Chart</h3>
+  <p>A bar chart showing the distribution of today's visits across clinical departments. Hover over bars to see exact counts.</p>
+
+  <h3>Alerts Panel</h3>
+  <ul>
+    <li><strong>Low Stock Drugs</strong> — Drugs whose quantity is at or below the reorder level</li>
+    <li><strong>Pending Lab Orders</strong> — Lab tests awaiting processing</li>
+    <li><strong>Available Beds</strong> — Free beds out of total capacity</li>
+  </ul>
+
+  <h3>User Manual</h3>
+  <p>A <strong>User Manual</strong> button is available on the Dashboard. Click it to open this manual in a new tab where you can read it online or print it to PDF.</p>
+</section>
+
+<!-- ══════════════════════════════════════ SECTION 4 ══════════════════════════════════════ -->
+<section id="sec4">
+  <h2 class="section-title"><span class="num">4</span> Patient Management</h2>
+  <p>Navigate to <strong>Patients</strong> in the sidebar. All registered patients are listed here with their name, patient number, phone, gender, and date of birth.</p>
+
+  <h3 id="sec4a">4a. Register a Patient</h3>
+  <ol class="steps">
+    <li>Click the <strong>New Patient</strong> button (top-right).</li>
+    <li>Fill in the required fields: <em>Full Name</em>, <em>Date of Birth</em>, <em>Gender</em>, <em>Phone Number</em>.</li>
+    <li>Enter optional fields as available: <em>ID/Passport Number</em>, <em>Address</em>, <em>Email</em>, <em>Next of Kin</em>, <em>Blood Group</em>, <em>Allergies</em>.</li>
+    <li>Click <strong>Save Patient</strong>. The system auto-generates a unique <strong>Patient Number</strong>.</li>
+  </ol>
+
+  <div class="box warn"><strong>Duplicate Check:</strong> The system automatically checks if a patient with the same phone number or ID already exists and warns you before saving.</div>
+
+  <h3 id="sec4b">4b. Search for a Patient</h3>
+  <p>Use the <strong>Search</strong> bar at the top of the Patients page. You can search by:</p>
+  <ul>
+    <li>Full name (partial match supported)</li>
+    <li>Patient number (e.g. <code>PT-00123</code>)</li>
+    <li>Phone number</li>
+    <li>ID / Passport number</li>
+  </ul>
+  <p>Results appear instantly as you type (after 2 characters). Click any row to open the patient's full record.</p>
+
+  <h3 id="sec4c">4c. Edit Patient Record</h3>
+  <ol class="steps">
+    <li>Click on a patient row to open their detail page.</li>
+    <li>Click <strong>Edit</strong>.</li>
+    <li>Update the required fields and click <strong>Save</strong>.</li>
+  </ol>
+
+  <div class="box tip"><strong>Tip:</strong> The patient record shows visit history at the bottom. Click any visit to navigate directly to that consultation.</div>
+</section>
+
+<!-- ══════════════════════════════════════ SECTION 5 ══════════════════════════════════════ -->
+<section id="sec5">
+  <h2 class="section-title"><span class="num">5</span> Appointments</h2>
+  <p>Manage scheduled appointments via the <strong>Appointments</strong> module.</p>
+
+  <h3>Book an Appointment</h3>
+  <ol class="steps">
+    <li>Click <strong>New Appointment</strong>.</li>
+    <li>Search for and select the patient.</li>
+    <li>Choose the <strong>Doctor</strong> and appointment <strong>Date &amp; Time</strong>.</li>
+    <li>Add an optional reason/notes, then click <strong>Save</strong>.</li>
+  </ol>
+
+  <h3>Appointment Statuses</h3>
+  <table>
+    <tr><th>Status</th><th>Meaning</th></tr>
+    <tr><td>SCHEDULED</td><td>Appointment booked, patient not yet arrived</td></tr>
+    <tr><td>CONFIRMED</td><td>Patient confirmed via phone/in-person</td></tr>
+    <tr><td>COMPLETED</td><td>Patient attended and visit was created</td></tr>
+    <tr><td>CANCELLED</td><td>Appointment cancelled</td></tr>
+    <tr><td>NO_SHOW</td><td>Patient did not arrive</td></tr>
+  </table>
+
+  <p>Click the status badge on any appointment to update it.</p>
+</section>
+
+<!-- ══════════════════════════════════════ SECTION 6 ══════════════════════════════════════ -->
+<section id="sec6">
+  <h2 class="section-title"><span class="num">6</span> Triage Queue</h2>
+  <p>Triage is performed by <span class="role nurse">NURSE</span> staff when a patient arrives. Navigate to <strong>Triage</strong> in the sidebar.</p>
+
+  <h3>Performing Triage</h3>
+  <ol class="steps">
+    <li>The queue shows all patients who have a visit created but not yet triaged.</li>
+    <li>Click <strong>Triage</strong> on the relevant patient row.</li>
+    <li>Assign a <strong>Priority</strong>:
+      <ul>
+        <li><strong>IMMEDIATE</strong> — Life-threatening, needs immediate attention</li>
+        <li><strong>URGENT</strong> — Serious condition, see within 30 minutes</li>
+        <li><strong>LESS_URGENT</strong> — Stable, can wait up to 2 hours</li>
+        <li><strong>NON_URGENT</strong> — Routine visit</li>
+      </ul>
+    </li>
+    <li>Record initial vitals (BP, Temp, Pulse, etc.) and any triage notes.</li>
+    <li>Click <strong>Save Triage</strong>. The visit moves to the doctor's queue.</li>
+  </ol>
+
+  <div class="box warn"><strong>Emergency Protocol:</strong> IMMEDIATE priority patients should be taken directly to the doctor and triaged retrospectively if needed.</div>
+</section>
+
+<!-- ══════════════════════════════════════ SECTION 7 ══════════════════════════════════════ -->
+<section id="sec7">
+  <h2 class="section-title"><span class="num">7</span> Consultations (Visits)</h2>
+  <p>The <strong>Consultations</strong> module manages all clinical visits. Doctors see their queue here; receptionists can create new visits.</p>
+
+  <h3 id="sec7a">7a. Create a New Visit</h3>
+  <ol class="steps">
+    <li>Click <strong>New Visit</strong>.</li>
+    <li>Search for the patient by name or number. Select them from the dropdown.</li>
+    <li>Optionally assign a <strong>Doctor</strong>.</li>
+    <li>Select <strong>Visit Type</strong>: OPD (outpatient), IPD (inpatient), or Emergency.</li>
+    <li>Enter the <strong>Chief Complaint</strong> (why the patient is presenting).</li>
+    <li>Click <strong>Create Visit</strong>.</li>
+  </ol>
+
+  <div class="box tip"><strong>Search:</strong> Use the search bar on the Consultations list to quickly find a visit by patient name or number.</div>
+
+  <h3 id="sec7b">7b. Clinical Notes &amp; Vitals</h3>
+  <ol class="steps">
+    <li>Click any visit row to open the <strong>Visit Detail</strong> page.</li>
+    <li>Click <strong>Edit</strong> to begin entering clinical information.</li>
+    <li>Fill in the clinical sections:
+      <ul>
+        <li><strong>Chief Complaint</strong> — Patient's primary symptom</li>
+        <li><strong>Presenting Illness</strong> — Detailed history</li>
+        <li><strong>Examination</strong> — Physical findings</li>
+        <li><strong>Diagnosis</strong> — Start typing a disease name or ICD-11 code; an autocomplete dropdown will appear. Select the correct diagnosis to auto-fill the ICD-11 code.</li>
+        <li><strong>Treatment Plan</strong> — Planned management</li>
+        <li><strong>Doctor Notes</strong> — Any additional notes</li>
+      </ul>
+    </li>
+    <li>Enter <strong>Vital Signs</strong> on the right panel: Blood Pressure, Temperature, Pulse, Respiratory Rate, Weight, Height, O₂ Saturation.</li>
+    <li>Click <strong>Save</strong>.</li>
+  </ol>
+
+  <h3 id="sec7c">7c. Prescriptions</h3>
+  <ol class="steps">
+    <li>In the Visit Detail page, click <strong>+ Prescribe</strong> in the Prescriptions card.</li>
+    <li>In the modal, type the <strong>drug name</strong> in the search box. Results come from the pharmacy inventory.</li>
+    <li>Select the drug from the dropdown. Its stock quantity is shown.</li>
+    <li>Enter <strong>Dosage</strong> (e.g. 500mg), <strong>Frequency</strong> (e.g. 3× daily), <strong>Duration</strong> (e.g. 5 days), and <strong>Quantity</strong>.</li>
+    <li>Add any special <strong>Instructions</strong> (e.g. take after meals).</li>
+    <li>Click <strong>Create Prescription</strong>.</li>
+  </ol>
+
+  <div class="box info"><strong>Dispensing:</strong> Once prescribed, the pharmacist will see the prescription in their Pending Prescriptions queue and dispense it.</div>
+
+  <h3 id="sec7d">7d. Lab Orders</h3>
+  <ol class="steps">
+    <li>Click <strong>+ Order Lab</strong> in the Lab Orders card.</li>
+    <li>Select the required test from the dropdown (shows test name, code, and price).</li>
+    <li>Click <strong>Create Lab Order</strong>.</li>
+  </ol>
+  <p>The lab technician will process the order. When results are ready, a banner appears on the visit page for the doctor to review.</p>
+
+  <h3 id="sec7e">7e. Imaging Orders</h3>
+  <p>In the Imaging Orders card, additional imaging (X-ray, MRI, CT Scan, etc.) can be requested. The radiologist will process and enter findings.</p>
+
+  <h3 id="sec7f">7f. Completing a Visit</h3>
+  <ol class="steps">
+    <li>Before completing, click <strong>Send to Billing</strong> to automatically create a billing invoice populated with all prescriptions, lab tests, and imaging ordered during the visit.</li>
+    <li>Once the consultation is finished, click <strong>Complete Visit</strong>. This locks the visit from further editing.</li>
+  </ol>
+
+  <h3>Print &amp; Share</h3>
+  <ul>
+    <li><strong>Print Report</strong> — Opens a formatted diagnosis report suitable for printing.</li>
+    <li><strong>WhatsApp</strong> — Sends the diagnosis report directly to the patient's WhatsApp number.</li>
+  </ul>
+</section>
+
+<!-- ══════════════════════════════════════ SECTION 8 ══════════════════════════════════════ -->
+<section id="sec8">
+  <h2 class="section-title"><span class="num">8</span> Pharmacy</h2>
+
+  <h3 id="sec8a">8a. Drug Inventory</h3>
+  <p>The <strong>Drug Inventory</strong> tab lists all drugs currently stocked. Each drug record includes:</p>
+  <ul>
+    <li>Generic name, brand name, category, formulation, strength</li>
+    <li>Quantity in stock, reorder level</li>
+    <li>Batch number, expiry date, supplier</li>
+    <li>Cost price, selling price</li>
+  </ul>
+
+  <h4>Add a New Drug</h4>
+  <ol class="steps">
+    <li>Click <strong>Add Drug</strong>.</li>
+    <li>Fill in all drug details and click <strong>Save</strong>.</li>
+  </ol>
+
+  <h4>Edit / Restock a Drug</h4>
+  <ol class="steps">
+    <li>Click the <strong>pencil icon</strong> on any drug row.</li>
+    <li>Update the quantity or any other field and click <strong>Update</strong>.</li>
+  </ol>
+
+  <div class="box warn"><strong>Low Stock Alert:</strong> Drugs at or below their reorder level are highlighted and appear in the Dashboard alerts. Restock them promptly.</div>
+
+  <h3 id="sec8b">8b. Dispensing Prescriptions</h3>
+  <ol class="steps">
+    <li>Go to the <strong>Pending Prescriptions</strong> tab.</li>
+    <li>Review the prescription: patient name, drug, dosage, quantity.</li>
+    <li>Click <strong>Dispense</strong> to mark the prescription as dispensed and deduct from inventory.</li>
+  </ol>
+
+  <h3 id="sec8c">8c. Refunds</h3>
+  <p>If a patient returns dispensed medication, a refund can be initiated from the <strong>Refunds</strong> module. An admin will review and approve or reject the refund request.</p>
+</section>
+
+<!-- ══════════════════════════════════════ SECTION 9 ══════════════════════════════════════ -->
+<section id="sec9">
+  <h2 class="section-title"><span class="num">9</span> Laboratory</h2>
+  <p>Navigate to <strong>Laboratory</strong>. It has two tabs: <em>Orders Queue</em> and <em>Test Catalog</em>.</p>
+
+  <h3>Orders Queue</h3>
+  <p>Lab orders flow through the following statuses:</p>
+  <table>
+    <tr><th>Status</th><th>Action Required</th><th>Done By</th></tr>
+    <tr><td>ORDERED</td><td>Collect patient sample</td><td>Lab Technician</td></tr>
+    <tr><td>SAMPLE_COLLECTED</td><td>Process the sample and enter result</td><td>Lab Technician</td></tr>
+    <tr><td>COMPLETED</td><td>Verify the result</td><td>Lab Technician / Senior</td></tr>
+    <tr><td>VERIFIED</td><td>Release result to doctor</td><td>Lab Technician</td></tr>
+    <tr><td>RELEASED</td><td>Doctor reviews result</td><td>Doctor</td></tr>
+  </table>
+
+  <p>Click the status filter buttons to see orders at each stage. Use the <strong>patient search box</strong> to filter by patient name or number within the current status.</p>
+
+  <h4>Creating a New Lab Order (from Lab page)</h4>
+  <ol class="steps">
+    <li>Click <strong>New Order</strong>.</li>
+    <li>Search for the patient by name or number, then select them.</li>
+    <li>Select the patient's relevant <strong>visit</strong> from the dropdown.</li>
+    <li>Choose the <strong>test</strong> to be performed.</li>
+    <li>Click <strong>Create Order</strong>.</li>
+  </ol>
+
+  <h4>Entering a Test Result</h4>
+  <ol class="steps">
+    <li>When an order is in <strong>SAMPLE_COLLECTED</strong> status, click <strong>Process</strong>.</li>
+    <li>Enter the <strong>Result</strong> value, check <strong>Mark as Abnormal</strong> if applicable, and add any <strong>Remarks</strong>.</li>
+    <li>Click <strong>Submit Result</strong>. The order moves to COMPLETED status.</li>
+  </ol>
+
+  <h3>Test Catalog</h3>
+  <p>Manage the list of available lab tests. Each test has a name, code, category, sample type, reference range, unit, and price. Admins and lab technicians can add or edit tests.</p>
+</section>
+
+<!-- ══════════════════════════════════════ SECTION 10 ══════════════════════════════════════ -->
+<section id="sec10">
+  <h2 class="section-title"><span class="num">10</span> Imaging (Radiology)</h2>
+  <p>The <strong>Imaging</strong> module manages X-rays, MRI, CT scans, ultrasounds, and other imaging orders.</p>
+
+  <h3>Workflow</h3>
+  <ol class="steps">
+    <li>A doctor orders imaging from within a Visit (Imaging Orders card).</li>
+    <li>The radiologist sees the pending order in the Imaging module.</li>
+    <li>After completing the scan, the radiologist clicks <strong>Complete</strong>, enters <strong>Findings</strong> and <strong>Impression</strong>.</li>
+    <li>The findings appear on the visit page and are included in the printed diagnosis report.</li>
+  </ol>
+
+  <p>Filter orders by status: <em>PENDING</em>, <em>IN_PROGRESS</em>, <em>COMPLETED</em>.</p>
+</section>
+
+<!-- ══════════════════════════════════════ SECTION 11 ══════════════════════════════════════ -->
+<section id="sec11">
+  <h2 class="section-title"><span class="num">11</span> Billing &amp; Payments</h2>
+
+  <h3 id="sec11a">11a. Create an Invoice</h3>
+  <ol class="steps">
+    <li>Go to <strong>Billing</strong>.</li>
+    <li>Click <strong>New Invoice</strong>.</li>
+    <li>Search for the patient and select them.</li>
+    <li>Optionally link a <strong>Visit ID</strong> (or leave blank for a standalone invoice).</li>
+    <li>Click <strong>Create Invoice</strong>. The invoice opens automatically.</li>
+  </ol>
+
+  <div class="box tip"><strong>Auto-populate:</strong> When "Send to Billing" is clicked from a Visit, an invoice is created and automatically populated with all prescriptions, lab tests, and imaging charges from that visit.</div>
+
+  <h3 id="sec11b">11b. Add Services to an Invoice</h3>
+  <ol class="steps">
+    <li>Open an invoice and click <strong>+ Add Service</strong>.</li>
+    <li>Optionally pick from the <strong>Services Catalog</strong> (quick-fill buttons).</li>
+    <li>Select <strong>Service Type</strong>. If you select <strong>Pharmacy</strong>, a drug search box appears — type the drug name to search the pharmacy inventory and auto-fill the description and price.</li>
+    <li>Enter or confirm: <em>Description</em>, <em>Quantity</em>, <em>Unit Price</em>.</li>
+    <li>Click <strong>Add Service</strong>.</li>
+  </ol>
+
+  <h3 id="sec11c">11c. Record a Payment</h3>
+  <ol class="steps">
+    <li>Open the invoice and click <strong>Record Payment</strong>.</li>
+    <li>Choose the payment method: <em>Cash</em>, <em>M-Pesa</em>, <em>Card</em>, <em>Bank Transfer</em>, <em>Insurance</em>, or <em>Donation</em>.</li>
+    <li>Enter the amount and reference number (for M-Pesa, card, or bank).</li>
+    <li>For <strong>split payments</strong> (multiple methods), click <strong>Split Payment</strong> and add each payment entry.</li>
+    <li>Click <strong>Record Payment</strong>. The invoice status updates automatically: <em>PENDING → PARTIAL → PAID</em>.</li>
+  </ol>
+
+  <h3 id="sec11d">11d. Insurance</h3>
+  <p>For insurance-covered patients:</p>
+  <ol class="steps">
+    <li>Open the invoice and click the <strong>edit (pencil)</strong> icon.</li>
+    <li>Enter the <strong>Insurance Covered Amount</strong>. This reduces the patient's balance.</li>
+    <li>Record any remaining co-payment as a normal payment.</li>
+  </ol>
+
+  <h3>Invoice Statuses</h3>
+  <table>
+    <tr><th>Status</th><th>Meaning</th></tr>
+    <tr><td>PENDING</td><td>No payment received yet</td></tr>
+    <tr><td>PARTIAL</td><td>Partial payment received</td></tr>
+    <tr><td>PAID</td><td>Fully paid</td></tr>
+    <tr><td>WAIVED</td><td>Bill waived by administration</td></tr>
+    <tr><td>REFUNDED</td><td>Payment refunded</td></tr>
+  </table>
+
+  <div class="box warn"><strong>Printing Receipts:</strong> Use the <strong>Print Invoice</strong> button on an open invoice to generate a printable receipt/invoice PDF.</div>
+</section>
+
+<!-- ══════════════════════════════════════ SECTION 12 ══════════════════════════════════════ -->
+<section id="sec12">
+  <h2 class="section-title"><span class="num">12</span> Wards &amp; Admissions</h2>
+  <p>Manage inpatient admissions in the <strong>Wards</strong> module.</p>
+
+  <h3>Admitting a Patient</h3>
+  <ol class="steps">
+    <li>Go to <strong>Wards</strong> → <strong>Admissions</strong>.</li>
+    <li>Click <strong>Admit Patient</strong>.</li>
+    <li>Search for the patient and select them.</li>
+    <li>Choose the <strong>Ward</strong>, <strong>Room</strong>, and <strong>Bed</strong> from the available options.</li>
+    <li>Enter the <strong>Diagnosis</strong> and <strong>Admission Notes</strong>.</li>
+    <li>Click <strong>Admit</strong>.</li>
+  </ol>
+
+  <h3>Nursing Notes</h3>
+  <p>Nurses can add ongoing nursing notes to each admission. Click on an active admission and use the <strong>Add Nursing Note</strong> button.</p>
+
+  <h3>Discharging a Patient</h3>
+  <ol class="steps">
+    <li>Open the patient's admission.</li>
+    <li>Click <strong>Discharge</strong>.</li>
+    <li>Enter a <strong>Discharge Summary</strong>.</li>
+    <li>Click <strong>Confirm Discharge</strong>. The bed is freed automatically.</li>
+  </ol>
+</section>
+
+<!-- ══════════════════════════════════════ SECTION 13 ══════════════════════════════════════ -->
+<section id="sec13">
+  <h2 class="section-title"><span class="num">13</span> Insurance Claims</h2>
+  <p>Track and process insurance claims via <strong>Billing → Insurance Claims</strong>.</p>
+
+  <ol class="steps">
+    <li>Click <strong>New Claim</strong>.</li>
+    <li>Select the <strong>Insurance Company</strong>, <strong>Patient</strong>, and <strong>Invoice</strong>.</li>
+    <li>Enter the <strong>Claimed Amount</strong> and any reference or policy number.</li>
+    <li>Click <strong>Submit Claim</strong>.</li>
+  </ol>
+
+  <h3>Claim Statuses</h3>
+  <table>
+    <tr><th>Status</th><th>Meaning</th></tr>
+    <tr><td>SUBMITTED</td><td>Claim sent to insurer</td></tr>
+    <tr><td>UNDER_REVIEW</td><td>Insurer is processing</td></tr>
+    <tr><td>APPROVED</td><td>Insurer approved the claim</td></tr>
+    <tr><td>PARTIALLY_APPROVED</td><td>Insurer approved a partial amount</td></tr>
+    <tr><td>REJECTED</td><td>Claim was denied</td></tr>
+    <tr><td>PAID</td><td>Payment received from insurer</td></tr>
+  </table>
+</section>
+
+<!-- ══════════════════════════════════════ SECTION 14 ══════════════════════════════════════ -->
+<section id="sec14">
+  <h2 class="section-title"><span class="num">14</span> Reports</h2>
+  <p>Generate reports in the <strong>Reports</strong> module. All reports require a <strong>Start Date</strong> and <strong>End Date</strong>.</p>
+
+  <table>
+    <tr><th>Report</th><th>Description</th></tr>
+    <tr><td>Financial</td><td>Revenue totals, payment method breakdown, outstanding balances</td></tr>
+    <tr><td>Revenue</td><td>Revenue by payment method with bar chart (Cash, M-Pesa, Card, Insurance, etc.)</td></tr>
+    <tr><td>Patients</td><td>New registrations, demographics, visit counts</td></tr>
+    <tr><td>Morbidity</td><td>Top diagnoses by frequency (ICD-11 coded)</td></tr>
+    <tr><td>MOH</td><td>Ministry of Health formatted summary (visit types, age groups, gender)</td></tr>
+  </table>
+
+  <div class="box tip"><strong>Tip:</strong> All reports can be printed from the browser using <strong>Ctrl+P</strong> (or Cmd+P on Mac). Choose "Save as PDF" to get a PDF copy.</div>
+</section>
+
+<!-- ══════════════════════════════════════ SECTION 15 ══════════════════════════════════════ -->
+<section id="sec15">
+  <h2 class="section-title"><span class="num">15</span> User Management</h2>
+  <p>Available to <span class="role admin">SUPER_ADMIN</span> and <span class="role admin">HOSPITAL_ADMIN</span> only.</p>
+
+  <h3>Create a New User</h3>
+  <ol class="steps">
+    <li>Go to <strong>Users</strong> in the sidebar.</li>
+    <li>Click <strong>New User</strong>.</li>
+    <li>Fill in: <em>Full Name</em>, <em>Email</em>, <em>Role</em>, <em>Department</em> (optional), <em>Specialization</em> (for doctors), <em>Password</em>.</li>
+    <li>Click <strong>Create User</strong>. The user can now log in with their email and password.</li>
+  </ol>
+
+  <h3>Edit a User</h3>
+  <p>Click the pencil icon on any user row to update their profile. Click the lock icon to reset their password.</p>
+
+  <h3>Deactivate / Delete a User</h3>
+  <p>Use the delete icon. Only Super Admins can permanently delete users. Deleted users' records are preserved for audit purposes.</p>
+</section>
+
+<!-- ══════════════════════════════════════ SECTION 16 ══════════════════════════════════════ -->
+<section id="sec16">
+  <h2 class="section-title"><span class="num">16</span> Settings</h2>
+  <p>Available to <span class="role admin">SUPER_ADMIN</span> and <span class="role admin">HOSPITAL_ADMIN</span> only.</p>
+
+  <p>Navigate to <strong>Settings</strong> to update the hospital's branding and contact information:</p>
+  <ul>
+    <li><strong>Hospital Name</strong> — Appears on all printed documents</li>
+    <li><strong>Tagline</strong> — Sub-title shown on reports and receipts</li>
+    <li><strong>Address</strong> — Physical address</li>
+    <li><strong>Phone</strong> — Contact number</li>
+    <li><strong>Email</strong> — Hospital email address</li>
+  </ul>
+
+  <p>Click <strong>Save Settings</strong> to apply changes. These details appear on all printed invoices, receipts, and diagnosis reports.</p>
+
+  <h3>Medical Services Catalog</h3>
+  <p>The Services Catalog (accessible from the Billing module settings) contains pre-defined service items (consultation fees, procedure charges, etc.) that can be quickly added to invoices. Admins can add, edit, and deactivate services.</p>
+</section>
+
+<!-- ══════════════════════════════════════ SECTION 17 ══════════════════════════════════════ -->
+<section id="sec17">
+  <h2 class="section-title"><span class="num">17</span> Notifications</h2>
+  <p>The bell icon in the top navigation bar shows unread notifications. Notifications are generated automatically for:</p>
+  <ul>
+    <li>New lab results released to a doctor</li>
+    <li>Prescriptions dispensed or rejected</li>
+    <li>Low stock drug alerts</li>
+    <li>New admissions or discharges</li>
+  </ul>
+
+  <p>Click a notification to navigate to the relevant record. Click <strong>Mark all as read</strong> to clear the badge.</p>
+</section>
+
+<!-- ══════════════════════════════════════ SECTION 18 ══════════════════════════════════════ -->
+<section id="sec18">
+  <h2 class="section-title"><span class="num">18</span> Troubleshooting &amp; Support</h2>
+
+  <h3>Common Issues</h3>
+  <table>
+    <tr><th>Problem</th><th>Solution</th></tr>
+    <tr><td>Cannot log in</td><td>Check your email and password. Contact your admin to reset your password.</td></tr>
+    <tr><td>Page shows no data</td><td>Check your internet connection. Refresh the page (F5). If it persists, contact support.</td></tr>
+    <tr><td>Cannot complete a visit</td><td>Ensure you have saved all clinical notes. Completed visits cannot be edited.</td></tr>
+    <tr><td>Drug not found in search</td><td>The drug may not be in the pharmacy inventory. Ask the pharmacist to add it first.</td></tr>
+    <tr><td>Invoice balance incorrect</td><td>Check if insurance covered amount is set on the invoice. Re-verify item quantities and prices.</td></tr>
+    <tr><td>Lab result not showing</td><td>The result must be RELEASED by the lab technician before it appears on the visit.</td></tr>
+    <tr><td>Bed not available</td><td>Check the Wards module for currently occupied vs. available beds. Discharge a patient first if needed.</td></tr>
+  </table>
+
+  <h3>Getting Help</h3>
+  <div class="box info">
+    <strong>Technical Support — Helvino Technologies Limited</strong><br/>
+    Website: <strong>helvino.org</strong><br/>
+    Phone: <strong>0703 445 756</strong><br/>
+    Email: <strong>support@helvino.org</strong>
+  </div>
+
+  <p style="margin-top:40px;text-align:center;color:#9ca3af;font-size:11px;">
+    &copy; 2025 Helvino Technologies Limited. All rights reserved.<br/>
+    This manual is for authorised users of the Hospital Management System only.
+  </p>
+</section>
+
+</body>
+</html>

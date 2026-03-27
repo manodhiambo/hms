@@ -1,0 +1,79 @@
+@import "tailwindcss";
+
+@theme {
+  /* Facebook-inspired blue palette */
+  --color-primary-50:  #EBF3FF;
+  --color-primary-100: #D6E9FF;
+  --color-primary-200: #AAD0FE;
+  --color-primary-300: #74B2FD;
+  --color-primary-400: #3D8BFC;
+  --color-primary-500: #1877F2;
+  --color-primary-600: #1360D9;
+  --color-primary-700: #0F4DB8;
+  --color-primary-800: #0B3B8F;
+  --color-primary-900: #082B6B;
+
+  /* Teal accents */
+  --color-teal-50:  #f0fdfa;
+  --color-teal-500: #14b8a6;
+  --color-teal-600: #0d9488;
+  --color-teal-700: #0f766e;
+
+  /* Facebook app background */
+  --color-fb-bg: #F0F2F5;
+
+  /* Surface / card */
+  --color-surface: #FFFFFF;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background-color: #F0F2F5;
+}
+
+* { box-sizing: border-box; }
+
+/* ── Thin custom scrollbar (Chrome/Edge) ── */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 999px; }
+::-webkit-scrollbar-thumb:hover { background: #9ca3af; }
+
+/* ── Card / surface utility ── */
+.card {
+  background: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.10), 0 1px 2px rgba(0,0,0,0.06);
+}
+
+.card-flat {
+  background: #ffffff;
+  border-radius: 12px;
+  border: 1px solid #e5e7eb;
+}
+
+/* ── Smooth page transitions ── */
+.page-enter {
+  animation: fadeSlideUp 0.2s ease-out;
+}
+
+@keyframes fadeSlideUp {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0);   }
+}
+
+/* ── Button base ── */
+button { transition: all 0.15s ease; }
+
+/* ── Input focus ring ── */
+input:focus, textarea:focus, select:focus {
+  outline: none;
+  ring: 2px;
+}
