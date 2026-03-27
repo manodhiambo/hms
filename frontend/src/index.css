@@ -1,7 +1,7 @@
 @import "tailwindcss";
 
 @theme {
-  /* Facebook-inspired blue palette */
+  /* Facebook blue palette */
   --color-primary-50:  #EBF3FF;
   --color-primary-100: #D6E9FF;
   --color-primary-200: #AAD0FE;
@@ -21,14 +21,10 @@
 
   /* Facebook app background */
   --color-fb-bg: #F0F2F5;
-
-  /* Surface / card */
   --color-surface: #FFFFFF;
 }
 
-html {
-  scroll-behavior: smooth;
-}
+html { scroll-behavior: smooth; }
 
 body {
   margin: 0;
@@ -40,40 +36,49 @@ body {
 
 * { box-sizing: border-box; }
 
-/* ── Thin custom scrollbar (Chrome/Edge) ── */
-::-webkit-scrollbar { width: 6px; height: 6px; }
+/* ── Safe area for iPhone notch / home indicator ── */
+.safe-bottom { padding-bottom: env(safe-area-inset-bottom, 0px); }
+
+/* ── Bottom tab bar — sits above safe area ── */
+.bottom-nav {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+/* ── Thin scrollbar ── */
+::-webkit-scrollbar { width: 4px; height: 4px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 999px; }
 ::-webkit-scrollbar-thumb:hover { background: #9ca3af; }
 
-/* ── Card / surface utility ── */
+/* ── Card ── */
 .card {
   background: #ffffff;
   border-radius: 12px;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.10), 0 1px 2px rgba(0,0,0,0.06);
+  box-shadow: 0 1px 2px rgba(0,0,0,0.08);
 }
-
 .card-flat {
   background: #ffffff;
   border-radius: 12px;
   border: 1px solid #e5e7eb;
 }
 
-/* ── Smooth page transitions ── */
-.page-enter {
-  animation: fadeSlideUp 0.2s ease-out;
-}
-
+/* ── Page enter animation ── */
+.page-enter { animation: fadeSlideUp 0.18s ease-out; }
 @keyframes fadeSlideUp {
-  from { opacity: 0; transform: translateY(8px); }
-  to   { opacity: 1; transform: translateY(0);   }
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
 
-/* ── Button base ── */
-button { transition: all 0.15s ease; }
+/* ── Sheet slide-up ── */
+.sheet-enter { animation: sheetUp 0.22s cubic-bezier(0.32, 0.72, 0, 1); }
+@keyframes sheetUp {
+  from { transform: translateY(100%); }
+  to   { transform: translateY(0); }
+}
 
-/* ── Input focus ring ── */
-input:focus, textarea:focus, select:focus {
-  outline: none;
-  ring: 2px;
+button { transition: all 0.12s ease; }
+
+/* ── Touch target minimum ── */
+@media (max-width: 1024px) {
+  button, a { min-height: 44px; }
 }
