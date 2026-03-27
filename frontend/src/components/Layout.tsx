@@ -7,7 +7,7 @@ import { useHospitalStore } from '../store/hospitalStore';
 import {
   LayoutDashboard, Users, CalendarDays, Stethoscope, Pill, FlaskConical, Scan,
   CreditCard, Shield, BedDouble, UserCog, BarChart3, Bell, LogOut, Settings,
-  Heart, ClipboardList, Activity, ChevronRight, X, Menu, TrendingDown, ScrollText, RotateCcw, Tag, Building2,
+  Heart, ClipboardList, Activity, ChevronRight, X, Menu, TrendingDown, ScrollText, RotateCcw, Tag,
 } from 'lucide-react';
 
 const baseNavItems = [
@@ -79,15 +79,14 @@ export default function Layout() {
 
   const handleLogout = () => { logout(); navigate('/login'); };
 
-  const showQueue = role === 'DOCTOR' || role === 'NURSE';
-  const isAdmin   = role === 'SUPER_ADMIN';
+  const showQueue  = role === 'DOCTOR' || role === 'NURSE';
+  const isHospitalAdmin = role === 'HOSPITAL_ADMIN';
 
-  const adminOnlyPaths = ['/users', '/audit', '/hospitals'];
+  const adminOnlyPaths = ['/users', '/audit'];
   const navItemsBase = [
     ...(showQueue ? [baseNavItems[0], { path: '/my-queue', label: 'My Queue', icon: ClipboardList }, ...baseNavItems.slice(1)] : baseNavItems),
-    ...(isAdmin ? [{ path: '/hospitals', label: 'Hospitals', icon: Building2 }] : []),
   ];
-  const navItems = navItemsBase.filter(item => !adminOnlyPaths.includes(item.path) || isAdmin);
+  const navItems = navItemsBase.filter(item => !adminOnlyPaths.includes(item.path) || isHospitalAdmin);
 
   const initials = fullName?.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase() || '?';
 

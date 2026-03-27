@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useAuthStore } from './store/authStore';
 import Layout from './components/Layout';
+import AdminLayout from './components/AdminLayout';
 import ProtectedRoute from './components/ProtectedRoute';
 import LandingPage from './pages/landing/LandingPage';
 import LoginPage from './pages/auth/LoginPage';
@@ -29,10 +30,17 @@ import AuditPage from './pages/audit/AuditPage';
 import ServicesPage from './pages/services/ServicesPage';
 import HospitalsPage from './pages/hospitals/HospitalsPage';
 
-// Redirects SUPER_ADMIN away from tenant-only pages
-function SuperAdminGuard({ children }: { children: React.ReactNode }) {
+// Blocks SUPER_ADMIN from tenant-only routes
+function TenantOnly({ children }: { children: React.ReactNode }) {
   const role = useAuthStore((s) => s.role);
   if (role === 'SUPER_ADMIN') return <Navigate to="/hospitals" replace />;
+  return <>{children}</>;
+}
+
+// Blocks non-SUPER_ADMIN from admin routes
+function AdminOnly({ children }: { children: React.ReactNode }) {
+  const role = useAuthStore((s) => s.role);
+  if (role !== 'SUPER_ADMIN') return <Navigate to="/dashboard" replace />;
   return <>{children}</>;
 }
 
@@ -47,8 +55,15 @@ export default function App() {
         <Routes>
           <Route path="/" element={<LandingPage />} />
           <Route path="/login" element={<LoginPage />} />
-          <Route element={<ProtectedRoute><Layout /></ProtectedRoute>}>
-            <Route path="/dashboard" element={<SuperAdminGuard><DashboardPage /></SuperAdminGuard>} />
+
+          {/* ── SUPER_ADMIN routes ── dark admin shell, no HMS nav */}
+          <Route element={<ProtectedRoute><AdminOnly><AdminLayout /></AdminOnly></ProtectedRoute>}>
+            <Route path="/hospitals" element={<HospitalsPage />} />
+          </Route>
+
+          {/* ── Tenant (hospital staff) routes ── */}
+          <Route element={<ProtectedRoute><TenantOnly><Layout /></TenantOnly></ProtectedRoute>}>
+            <Route path="/dashboard" element={<DashboardPage />} />
             <Route path="/my-queue" element={<DoctorQueuePage />} />
             <Route path="/patients" element={<PatientsPage />} />
             <Route path="/patients/:id" element={<PatientDetailPage />} />
@@ -70,8 +85,8 @@ export default function App() {
             <Route path="/reports" element={<ReportsPage />} />
             <Route path="/notifications" element={<NotificationsPage />} />
             <Route path="/settings" element={<SettingsPage />} />
-            <Route path="/hospitals" element={<HospitalsPage />} />
           </Route>
+
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </BrowserRouter>
