@@ -7,6 +7,7 @@ import com.helvinotech.hms.enums.TriagePriority;
 import com.helvinotech.hms.enums.TriageStatus;
 import com.helvinotech.hms.exception.ResourceNotFoundException;
 import com.helvinotech.hms.repository.*;
+import com.helvinotech.hms.tenant.TenantContext;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -28,12 +29,14 @@ public class VisitService {
 
     @Transactional(readOnly = false)
     public VisitDTO createVisit(VisitDTO dto) {
+        Long hospitalId = TenantContext.getCurrentHospitalId();
         Patient patient = patientRepository.findById(dto.getPatientId())
                 .orElseThrow(() -> new ResourceNotFoundException("Patient", dto.getPatientId()));
         Visit visit = new Visit();
         visit.setPatient(patient);
         visit.setVisitType(dto.getVisitType());
         visit.setChiefComplaint(dto.getChiefComplaint());
+        visit.setHospitalId(hospitalId);
         if (dto.getDoctorId() != null) {
             User doctor = userRepository.findById(dto.getDoctorId())
                     .orElseThrow(() -> new ResourceNotFoundException("Doctor", dto.getDoctorId()));
@@ -54,6 +57,11 @@ public class VisitService {
     }
 
     public List<VisitDTO> getDoctorQueue(Long doctorId) {
+        Long hospitalId = TenantContext.getCurrentHospitalId();
+        if (hospitalId != null) {
+            return visitRepository.findByDoctorIdAndHospitalIdAndCompletedFalseOrderByCreatedAtAsc(doctorId, hospitalId)
+                    .stream().map(this::mapToDto).collect(Collectors.toList());
+        }
         return visitRepository.findByDoctorIdAndCompletedFalseOrderByCreatedAtAsc(doctorId)
                 .stream().map(this::mapToDto).collect(Collectors.toList());
     }
@@ -127,26 +135,50 @@ public class VisitService {
     }
 
     public List<VisitDTO> getTriageQueue() {
-        return visitRepository.findByTriageStatusInAndCompletedFalseOrderByCreatedAtAsc(
-                List.of(TriageStatus.WAITING, TriageStatus.TRIAGED, TriageStatus.IN_CONSULTATION, TriageStatus.PENDING_LAB_REVIEW))
+        Long hospitalId = TenantContext.getCurrentHospitalId();
+        List<TriageStatus> statuses = List.of(TriageStatus.WAITING, TriageStatus.TRIAGED,
+                TriageStatus.IN_CONSULTATION, TriageStatus.PENDING_LAB_REVIEW);
+        if (hospitalId != null) {
+            return visitRepository.findByTriageStatusInAndHospitalIdAndCompletedFalseOrderByCreatedAtAsc(statuses, hospitalId)
+                    .stream().map(this::mapToDto).collect(Collectors.toList());
+        }
+        return visitRepository.findByTriageStatusInAndCompletedFalseOrderByCreatedAtAsc(statuses)
                 .stream().map(this::mapToDto).collect(Collectors.toList());
     }
 
     public List<VisitDTO> getLabReviewQueue() {
+        Long hospitalId = TenantContext.getCurrentHospitalId();
+        if (hospitalId != null) {
+            return visitRepository.findVisitsWithReleasedLabResults(hospitalId, LabOrderStatus.RELEASED, TriageStatus.PENDING_LAB_REVIEW)
+                    .stream().map(this::mapToDto).collect(Collectors.toList());
+        }
         return visitRepository.findVisitsWithReleasedLabResults(LabOrderStatus.RELEASED, TriageStatus.PENDING_LAB_REVIEW)
                 .stream().map(this::mapToDto).collect(Collectors.toList());
     }
 
     public long countVisitsToday() {
+        Long hospitalId = TenantContext.getCurrentHospitalId();
         LocalDateTime startOfDay = LocalDateTime.now().toLocalDate().atStartOfDay();
+        if (hospitalId != null) {
+            return visitRepository.countByHospitalIdAndCreatedAtBetween(hospitalId, startOfDay, startOfDay.plusDays(1));
+        }
         return visitRepository.countByCreatedAtBetween(startOfDay, startOfDay.plusDays(1));
     }
 
     public Page<VisitDTO> getAllVisits(Pageable pageable) {
+        Long hospitalId = TenantContext.getCurrentHospitalId();
+        if (hospitalId != null) {
+            // Filter by hospitalId via custom query — use search with empty string fallback
+            return visitRepository.searchVisits(hospitalId, "", pageable).map(this::mapToDto);
+        }
         return visitRepository.findAll(pageable).map(this::mapToDto);
     }
 
     public Page<VisitDTO> searchVisits(String q, Pageable pageable) {
+        Long hospitalId = TenantContext.getCurrentHospitalId();
+        if (hospitalId != null) {
+            return visitRepository.searchVisits(hospitalId, q, pageable).map(this::mapToDto);
+        }
         return visitRepository.searchVisits(q, pageable).map(this::mapToDto);
     }
 

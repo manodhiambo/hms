@@ -27,6 +27,8 @@ export type ImagingType = 'XRAY' | 'ULTRASOUND' | 'CT_SCAN' | 'MRI';
 export type TriagePriority = 'IMMEDIATE' | 'URGENT' | 'LESS_URGENT' | 'NON_URGENT';
 export type TriageStatus = 'WAITING' | 'TRIAGED' | 'IN_CONSULTATION' | 'PENDING_LAB_REVIEW' | 'COMPLETED';
 
+export type SubscriptionStatus = 'TRIAL' | 'ACTIVE' | 'EXPIRED' | 'DEACTIVATED';
+
 export interface AuthResponse {
   token: string;
   refreshToken: string;
@@ -34,6 +36,29 @@ export interface AuthResponse {
   fullName: string;
   email: string;
   role: UserRole;
+  hospitalId?: number | null;
+  hospitalName?: string | null;
+}
+
+export interface Hospital {
+  id: number;
+  name: string;
+  slug: string;
+  email: string;
+  phone: string;
+  contactPerson: string;
+  county: string;
+  address: string;
+  active: boolean;
+  subscriptionStatus: SubscriptionStatus;
+  trialEndsAt: string | null;
+  subscriptionExpiresAt: string | null;
+  notes: string;
+  createdAt: string;
+  // registration fields
+  adminName?: string;
+  adminEmail?: string;
+  adminPassword?: string;
 }
 
 export interface User {

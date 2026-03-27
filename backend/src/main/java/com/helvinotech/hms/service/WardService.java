@@ -7,6 +7,7 @@ import com.helvinotech.hms.enums.BedStatus;
 import com.helvinotech.hms.exception.BadRequestException;
 import com.helvinotech.hms.exception.ResourceNotFoundException;
 import com.helvinotech.hms.repository.*;
+import com.helvinotech.hms.tenant.TenantContext;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -34,11 +35,18 @@ public class WardService {
     // Ward CRUD
     @Transactional(readOnly = false)
     public WardDTO createWard(WardDTO dto) {
-        Ward ward = Ward.builder().name(dto.getName()).type(dto.getType()).totalBeds(dto.getTotalBeds()).build();
+        Long hospitalId = TenantContext.getCurrentHospitalId();
+        Ward ward = Ward.builder().name(dto.getName()).type(dto.getType())
+                .totalBeds(dto.getTotalBeds()).hospitalId(hospitalId).build();
         return mapWardToDto(wardRepository.save(ward));
     }
 
     public List<WardDTO> getAllWards() {
+        Long hospitalId = TenantContext.getCurrentHospitalId();
+        if (hospitalId != null) {
+            return wardRepository.findByHospitalIdAndActiveTrue(hospitalId).stream()
+                    .map(this::mapWardToDto).collect(Collectors.toList());
+        }
         return wardRepository.findByActiveTrue().stream().map(this::mapWardToDto).collect(Collectors.toList());
     }
 
@@ -72,12 +80,18 @@ public class WardService {
     }
 
     public List<BedDTO> getAvailableBeds() {
+        Long hospitalId = TenantContext.getCurrentHospitalId();
+        if (hospitalId != null) {
+            return bedRepository.findByHospitalIdAndStatus(hospitalId, BedStatus.AVAILABLE)
+                    .stream().map(this::mapBedToDto).collect(Collectors.toList());
+        }
         return bedRepository.findByStatus(BedStatus.AVAILABLE).stream().map(this::mapBedToDto).collect(Collectors.toList());
     }
 
     // Admissions
     @Transactional(readOnly = false)
     public AdmissionDTO admitPatient(AdmissionDTO dto) {
+        Long hospitalId = TenantContext.getCurrentHospitalId();
         Patient patient = patientRepository.findById(dto.getPatientId())
                 .orElseThrow(() -> new ResourceNotFoundException("Patient", dto.getPatientId()));
         Bed bed = bedRepository.findById(dto.getBedId())
@@ -89,7 +103,7 @@ public class WardService {
 
         Admission admission = Admission.builder()
                 .patient(patient).bed(bed).admissionReason(dto.getAdmissionReason())
-                .admittedAt(LocalDateTime.now()).build();
+                .admittedAt(LocalDateTime.now()).hospitalId(hospitalId).build();
         if (dto.getVisitId() != null) {
             admission.setVisit(visitRepository.findById(dto.getVisitId()).orElse(null));
         }
@@ -113,18 +127,25 @@ public class WardService {
     }
 
     public Page<AdmissionDTO> getAdmissionsByStatus(AdmissionStatus status, Pageable pageable) {
+        Long hospitalId = TenantContext.getCurrentHospitalId();
+        if (hospitalId != null) {
+            return admissionRepository.findByHospitalIdAndStatus(hospitalId, status, pageable)
+                    .map(this::mapAdmissionToDto);
+        }
         return admissionRepository.findByStatus(status, pageable).map(this::mapAdmissionToDto);
     }
 
     // Nursing Notes
     @Transactional(readOnly = false)
     public NursingNoteDTO addNursingNote(NursingNoteDTO dto) {
+        Long hospitalId = TenantContext.getCurrentHospitalId();
         Admission admission = admissionRepository.findById(dto.getAdmissionId())
                 .orElseThrow(() -> new ResourceNotFoundException("Admission", dto.getAdmissionId()));
         User nurse = userRepository.findById(dto.getNurseId())
                 .orElseThrow(() -> new ResourceNotFoundException("User", dto.getNurseId()));
         NursingNote note = NursingNote.builder()
-                .admission(admission).nurse(nurse).notes(dto.getNotes()).vitalSigns(dto.getVitalSigns()).build();
+                .admission(admission).nurse(nurse).notes(dto.getNotes())
+                .vitalSigns(dto.getVitalSigns()).hospitalId(hospitalId).build();
         return mapNursingNoteToDto(nursingNoteRepository.save(note));
     }
 
@@ -133,9 +154,23 @@ public class WardService {
                 .stream().map(this::mapNursingNoteToDto).collect(Collectors.toList());
     }
 
-    public long countAvailableBeds() { return bedRepository.countByStatus(BedStatus.AVAILABLE); }
-    public long countOccupiedBeds() { return bedRepository.countByStatus(BedStatus.OCCUPIED); }
-    public long countTotalBeds() { return bedRepository.count(); }
+    public long countAvailableBeds() {
+        Long hospitalId = TenantContext.getCurrentHospitalId();
+        if (hospitalId != null) return bedRepository.countByHospitalIdAndStatus(hospitalId, BedStatus.AVAILABLE);
+        return bedRepository.countByStatus(BedStatus.AVAILABLE);
+    }
+
+    public long countOccupiedBeds() {
+        Long hospitalId = TenantContext.getCurrentHospitalId();
+        if (hospitalId != null) return bedRepository.countByHospitalIdAndStatus(hospitalId, BedStatus.OCCUPIED);
+        return bedRepository.countByStatus(BedStatus.OCCUPIED);
+    }
+
+    public long countTotalBeds() {
+        Long hospitalId = TenantContext.getCurrentHospitalId();
+        if (hospitalId != null) return bedRepository.countByHospitalId(hospitalId);
+        return bedRepository.count();
+    }
 
     private WardDTO mapWardToDto(Ward w) {
         WardDTO dto = new WardDTO();

@@ -13,6 +13,7 @@ import com.helvinotech.hms.repository.DrugRepository;
 import com.helvinotech.hms.repository.PrescriptionRepository;
 import com.helvinotech.hms.repository.RefundRepository;
 import com.helvinotech.hms.repository.UserRepository;
+import com.helvinotech.hms.tenant.TenantContext;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -59,6 +60,7 @@ public class RefundService {
 
         String refundNumber = "REF-" + LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss"));
 
+        Long hospitalId = TenantContext.getCurrentHospitalId();
         Refund refund = Refund.builder()
                 .refundNumber(refundNumber)
                 .prescription(rx)
@@ -68,6 +70,7 @@ public class RefundService {
                 .reason(dto.getReason())
                 .notes(dto.getNotes())
                 .status(RefundStatus.PENDING)
+                .hospitalId(hospitalId)
                 .build();
 
         return mapToDto(refundRepository.save(refund));
@@ -114,14 +117,27 @@ public class RefundService {
     }
 
     public Page<RefundDTO> getAllRefunds(Pageable pageable) {
+        Long hospitalId = TenantContext.getCurrentHospitalId();
+        if (hospitalId != null) {
+            return refundRepository.findByHospitalIdOrderByCreatedAtDesc(hospitalId, pageable).map(this::mapToDto);
+        }
         return refundRepository.findAllByOrderByCreatedAtDesc(pageable).map(this::mapToDto);
     }
 
     public Page<RefundDTO> getRefundsByStatus(RefundStatus status, Pageable pageable) {
+        Long hospitalId = TenantContext.getCurrentHospitalId();
+        if (hospitalId != null) {
+            return refundRepository.findByHospitalIdAndStatusOrderByCreatedAtDesc(hospitalId, status, pageable).map(this::mapToDto);
+        }
         return refundRepository.findByStatusOrderByCreatedAtDesc(status, pageable).map(this::mapToDto);
     }
 
     public List<RefundDTO> getRefundsByPatient(Long patientId) {
+        Long hospitalId = TenantContext.getCurrentHospitalId();
+        if (hospitalId != null) {
+            return refundRepository.findByHospitalIdAndPatientIdOrderByCreatedAtDesc(hospitalId, patientId)
+                    .stream().map(this::mapToDto).collect(Collectors.toList());
+        }
         return refundRepository.findByPatientIdOrderByCreatedAtDesc(patientId)
                 .stream().map(this::mapToDto).collect(Collectors.toList());
     }

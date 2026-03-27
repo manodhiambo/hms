@@ -1,5 +1,5 @@
 import api from './client';
-import type { ApiResponse, ActivityLog, Patient, Visit, Appointment, Drug, Prescription, LabTest, LabOrder, ImagingOrder, Billing, BillingItem, Payment, Refund, InsuranceCompany, InsuranceClaim, Ward, Room, Bed, Admission, NursingNote, User, Dashboard, Notification, Expense, PageResponse, AuthResponse, MedicalService } from '../types';
+import type { ApiResponse, ActivityLog, Patient, Visit, Appointment, Drug, Prescription, LabTest, LabOrder, ImagingOrder, Billing, BillingItem, Payment, Refund, InsuranceCompany, InsuranceClaim, Ward, Room, Bed, Admission, NursingNote, User, Dashboard, Notification, Expense, PageResponse, AuthResponse, MedicalService, Hospital } from '../types';
 
 // Auth
 export const authApi = {
@@ -273,4 +273,22 @@ export const notificationApi = {
   unreadCount: (userId: number) => api.get<ApiResponse<number>>(`/notifications/user/${userId}/unread-count`),
   markRead: (id: number) => api.put<ApiResponse<void>>(`/notifications/${id}/read`),
   markAllRead: (userId: number) => api.put<ApiResponse<void>>(`/notifications/user/${userId}/read-all`),
+};
+
+// Hospitals (SUPER_ADMIN + public registration)
+export const hospitalApi = {
+  register: (data: Partial<Hospital>) =>
+    api.post<ApiResponse<Hospital>>('/hospitals/register', data),
+  getAll: () =>
+    api.get<ApiResponse<Hospital[]>>('/hospitals'),
+  getById: (id: number) =>
+    api.get<ApiResponse<Hospital>>(`/hospitals/${id}`),
+  update: (id: number, data: Partial<Hospital>) =>
+    api.put<ApiResponse<Hospital>>(`/hospitals/${id}`, data),
+  activate: (id: number, notes?: string) =>
+    api.post<ApiResponse<Hospital>>(`/hospitals/${id}/activate`, { notes }),
+  deactivate: (id: number, reason?: string) =>
+    api.post<ApiResponse<Hospital>>(`/hospitals/${id}/deactivate`, { reason }),
+  impersonate: (id: number) =>
+    api.post<ApiResponse<import('../types').AuthResponse>>(`/hospitals/${id}/impersonate`),
 };

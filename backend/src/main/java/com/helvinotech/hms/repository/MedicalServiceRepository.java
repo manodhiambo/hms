@@ -8,6 +8,12 @@ import java.util.List;
 
 @Repository
 public interface MedicalServiceRepository extends JpaRepository<MedicalService, Long> {
+    // Tenant-scoped
+    List<MedicalService> findByHospitalIdAndActiveTrueOrderByCategory(Long hospitalId);
+    List<MedicalService> findByHospitalIdOrderByCategory(Long hospitalId);
+    List<MedicalService> findByHospitalIdAndServiceNameContainingIgnoreCaseAndActiveTrue(Long hospitalId, String name);
+
+    // Legacy
     List<MedicalService> findByActiveTrueOrderByCategory();
     List<MedicalService> findAllByOrderByCategory();
     List<MedicalService> findByServiceNameContainingIgnoreCaseAndActiveTrue(String name);

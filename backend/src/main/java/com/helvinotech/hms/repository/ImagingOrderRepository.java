@@ -16,6 +16,18 @@ import java.util.List;
 @Repository
 public interface ImagingOrderRepository extends JpaRepository<ImagingOrder, Long> {
     List<ImagingOrder> findByVisitId(Long visitId);
+
+    // Tenant-scoped
+    Page<ImagingOrder> findByHospitalId(Long hospitalId, Pageable pageable);
+    Page<ImagingOrder> findByHospitalIdAndStatus(Long hospitalId, LabOrderStatus status, Pageable pageable);
+
+    @Query("SELECT COUNT(io) FROM ImagingOrder io WHERE io.hospitalId = :hospitalId AND io.createdAt BETWEEN :start AND :end")
+    long countInRange(@Param("hospitalId") Long hospitalId, @Param("start") LocalDateTime start, @Param("end") LocalDateTime end);
+
+    @Query("SELECT io.imagingType, COUNT(io) FROM ImagingOrder io WHERE io.hospitalId = :hospitalId AND io.createdAt BETWEEN :start AND :end GROUP BY io.imagingType ORDER BY COUNT(io) DESC")
+    List<Object[]> countByTypeInRange(@Param("hospitalId") Long hospitalId, @Param("start") LocalDateTime start, @Param("end") LocalDateTime end);
+
+    // Legacy
     Page<ImagingOrder> findByStatus(LabOrderStatus status, Pageable pageable);
 
     @Query("SELECT COUNT(io) FROM ImagingOrder io WHERE io.createdAt BETWEEN :start AND :end")

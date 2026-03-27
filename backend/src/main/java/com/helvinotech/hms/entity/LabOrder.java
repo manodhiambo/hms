@@ -56,6 +56,9 @@ public class LabOrder {
     private LocalDateTime verifiedAt;
     private LocalDateTime releasedAt;
 
+    @Column(name = "hospital_id")
+    private Long hospitalId;
+
     @CreationTimestamp
     private LocalDateTime createdAt;
 }

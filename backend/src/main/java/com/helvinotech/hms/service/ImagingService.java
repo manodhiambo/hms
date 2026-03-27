@@ -9,6 +9,7 @@ import com.helvinotech.hms.exception.ResourceNotFoundException;
 import com.helvinotech.hms.repository.ImagingOrderRepository;
 import com.helvinotech.hms.repository.UserRepository;
 import com.helvinotech.hms.repository.VisitRepository;
+import com.helvinotech.hms.tenant.TenantContext;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -30,6 +31,7 @@ public class ImagingService {
 
     @Transactional(readOnly = false)
     public ImagingOrderDTO createOrder(ImagingOrderDTO dto) {
+        Long hospitalId = TenantContext.getCurrentHospitalId();
         Visit visit = visitRepository.findById(dto.getVisitId())
                 .orElseThrow(() -> new ResourceNotFoundException("Visit", dto.getVisitId()));
         ImagingOrder order = ImagingOrder.builder()
@@ -38,6 +40,7 @@ public class ImagingService {
                 .bodyPart(dto.getBodyPart())
                 .clinicalIndication(dto.getClinicalIndication())
                 .price(dto.getPrice())
+                .hospitalId(hospitalId)
                 .build();
         return mapToDto(imagingOrderRepository.save(order));
     }
@@ -47,6 +50,10 @@ public class ImagingService {
     }
 
     public Page<ImagingOrderDTO> getOrdersByStatus(LabOrderStatus status, Pageable pageable) {
+        Long hospitalId = TenantContext.getCurrentHospitalId();
+        if (hospitalId != null) {
+            return imagingOrderRepository.findByHospitalIdAndStatus(hospitalId, status, pageable).map(this::mapToDto);
+        }
         return imagingOrderRepository.findByStatus(status, pageable).map(this::mapToDto);
     }
 
@@ -65,6 +72,10 @@ public class ImagingService {
     }
 
     public Page<ImagingOrderDTO> getAllOrders(Pageable pageable) {
+        Long hospitalId = TenantContext.getCurrentHospitalId();
+        if (hospitalId != null) {
+            return imagingOrderRepository.findByHospitalId(hospitalId, pageable).map(this::mapToDto);
+        }
         return imagingOrderRepository.findAll(pageable).map(this::mapToDto);
     }
 

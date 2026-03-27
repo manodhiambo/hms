@@ -22,4 +22,5 @@ public class UserDTO {
     private String specialization;
     private String licenseNumber;
     private boolean active;
+    private Long hospitalId;
 }

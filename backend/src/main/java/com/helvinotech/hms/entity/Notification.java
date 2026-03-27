@@ -35,6 +35,9 @@ public class Notification {
     @Builder.Default
     private boolean read = false;
 
+    @Column(name = "hospital_id")
+    private Long hospitalId;
+
     @CreationTimestamp
     private LocalDateTime createdAt;
 }

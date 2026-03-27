@@ -30,6 +30,9 @@ public class NursingNote {
 
     private String vitalSigns;
 
+    @Column(name = "hospital_id")
+    private Long hospitalId;
+
     @CreationTimestamp
     private LocalDateTime createdAt;
 }

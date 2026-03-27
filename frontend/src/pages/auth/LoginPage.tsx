@@ -1,8 +1,16 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { Heart, Mail, Lock, Eye, EyeOff, Stethoscope, Pill, FlaskConical } from 'lucide-react';
+import { Heart, Mail, Lock, Eye, EyeOff, Stethoscope, Pill, FlaskConical, User } from 'lucide-react';
 import { authApi } from '../../api/services';
 import { useAuthStore } from '../../store/authStore';
+
+const APP_NAME = 'Hospital Information Manager';
+
+const demoCredentials = [
+  { label: 'Demo Admin', email: 'demo-admin@helvino.org', password: 'Demo@2025', color: 'bg-blue-50 text-blue-700 border-blue-200' },
+  { label: 'Demo Doctor', email: 'demo-doctor@helvino.org', password: 'Demo@2025', color: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
+  { label: 'Demo Nurse', email: 'demo-nurse@helvino.org', password: 'Demo@2025', color: 'bg-purple-50 text-purple-700 border-purple-200' },
+];
 
 export default function LoginPage() {
   const [email, setEmail]       = useState('');
@@ -21,11 +29,18 @@ export default function LoginPage() {
       const { data } = await authApi.login(email, password);
       login(data.data);
       navigate('/dashboard');
-    } catch {
-      setError('Invalid email or password. Please try again.');
+    } catch (err: any) {
+      const msg = err?.response?.data?.message;
+      setError(msg || 'Invalid email or password. Please try again.');
     } finally {
       setLoading(false);
     }
+  };
+
+  const fillDemo = (creds: typeof demoCredentials[0]) => {
+    setEmail(creds.email);
+    setPassword(creds.password);
+    setError('');
   };
 
   return (
@@ -44,8 +59,8 @@ export default function LoginPage() {
             <Heart className="w-6 h-6 text-white" fill="currentColor" />
           </div>
           <div>
-            <p className="text-white font-bold text-lg leading-tight">Ogada Church</p>
-            <p className="text-white/70 text-sm">Medical Clinic</p>
+            <p className="text-white font-bold text-lg leading-tight">Hospital Information</p>
+            <p className="text-white/70 text-sm">Manager — by Helvino Technologies</p>
           </div>
         </div>
 
@@ -74,7 +89,7 @@ export default function LoginPage() {
         </div>
 
         {/* Footer */}
-        <p className="text-white/40 text-xs relative">© {new Date().getFullYear()} Ogada Church Medical Clinic</p>
+        <p className="text-white/40 text-xs relative">© {new Date().getFullYear()} Helvino Technologies Limited</p>
       </div>
 
       {/* ── Right panel / form ── */}
@@ -86,19 +101,38 @@ export default function LoginPage() {
             <div className="w-16 h-16 rounded-3xl bg-primary-600 flex items-center justify-center shadow-lg mb-4">
               <Heart className="w-8 h-8 text-white" fill="currentColor" />
             </div>
-            <h1 className="text-xl font-bold text-gray-900">Ogada Church Medical Clinic</h1>
-            <p className="text-gray-400 text-sm mt-1">Hospital Management System</p>
+            <h1 className="text-xl font-bold text-gray-900">{APP_NAME}</h1>
+            <p className="text-gray-400 text-sm mt-1">by Helvino Technologies</p>
           </div>
 
           {/* Card */}
           <div className="bg-white rounded-3xl shadow-xl p-8">
             <h2 className="text-2xl font-bold text-gray-900 mb-1">Welcome back</h2>
-            <p className="text-gray-400 text-sm mb-6">Sign in to continue to HMS</p>
+            <p className="text-gray-400 text-sm mb-5">Sign in to continue to HMS</p>
+
+            {/* Demo credentials */}
+            <div className="mb-5">
+              <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2 flex items-center gap-1">
+                <User className="w-3 h-3" /> Demo Credentials — click to fill
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {demoCredentials.map((creds) => (
+                  <button
+                    key={creds.label}
+                    type="button"
+                    onClick={() => fillDemo(creds)}
+                    className={`text-xs font-medium px-3 py-1.5 rounded-full border cursor-pointer transition-all hover:opacity-80 ${creds.color}`}
+                  >
+                    {creds.label}
+                  </button>
+                ))}
+              </div>
+            </div>
 
             {error && (
-              <div className="flex items-center gap-2 bg-red-50 text-red-700 px-4 py-3 rounded-2xl text-sm mb-5 border border-red-100">
-                <span className="text-red-400">⚠</span>
-                {error}
+              <div className="flex items-start gap-2 bg-red-50 text-red-700 px-4 py-3 rounded-2xl text-sm mb-5 border border-red-100">
+                <span className="text-red-400 mt-0.5">⚠</span>
+                <span>{error}</span>
               </div>
             )}
 
@@ -163,14 +197,12 @@ export default function LoginPage() {
                 ) : 'Sign In'}
               </button>
             </form>
-
-            <p className="text-xs text-gray-300 mt-6 text-center">
-              Default: admin@example.com / admin123
-            </p>
           </div>
 
           <p className="text-center text-xs text-gray-400 mt-6">
             <Link to="/" className="hover:text-primary-600 transition-colors">← Back to home</Link>
+            <span className="mx-2 text-gray-200">|</span>
+            <a href="tel:0110421320" className="hover:text-primary-600 transition-colors">Support: 0110421320</a>
           </p>
         </div>
       </div>

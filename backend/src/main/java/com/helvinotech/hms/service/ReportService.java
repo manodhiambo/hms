@@ -2,6 +2,7 @@ package com.helvinotech.hms.service;
 
 import com.helvinotech.hms.enums.AdmissionStatus;
 import com.helvinotech.hms.repository.*;
+import com.helvinotech.hms.tenant.TenantContext;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -32,12 +33,19 @@ public class ReportService {
     private final AdmissionRepository admissionRepository;
 
     public Map<String, Object> getFinancialReport(LocalDate startDate, LocalDate endDate) {
+        Long hospitalId = TenantContext.getCurrentHospitalId();
         LocalDateTime start = startDate.atStartOfDay();
         LocalDateTime end = endDate.plusDays(1).atStartOfDay();
 
-        BigDecimal revenue = billingRepository.sumRevenueByDateRange(start, end);
-        BigDecimal payments = paymentRepository.sumPaymentsByDateRange(start, end);
-        BigDecimal expenses = expenseRepository.sumExpensesByDateRange(startDate, endDate);
+        BigDecimal revenue = hospitalId != null
+                ? billingRepository.sumRevenueByDateRange(hospitalId, start, end)
+                : billingRepository.sumRevenueByDateRange(start, end);
+        BigDecimal payments = hospitalId != null
+                ? paymentRepository.sumPaymentsByDateRange(hospitalId, start, end)
+                : paymentRepository.sumPaymentsByDateRange(start, end);
+        BigDecimal expenses = hospitalId != null
+                ? expenseRepository.sumExpensesByDateRange(hospitalId, startDate, endDate)
+                : expenseRepository.sumExpensesByDateRange(startDate, endDate);
 
         Map<String, Object> report = new LinkedHashMap<>();
         report.put("startDate", startDate);
@@ -46,15 +54,16 @@ public class ReportService {
         report.put("totalPayments", payments);
         report.put("totalExpenses", expenses);
         report.put("netIncome", payments.subtract(expenses));
-        report.put("byMethod", buildByMethodMap(start, end));
+        report.put("byMethod", buildByMethodMap(hospitalId, start, end));
         return report;
     }
 
     public Map<String, Object> getRevenueReport(LocalDate startDate, LocalDate endDate) {
+        Long hospitalId = TenantContext.getCurrentHospitalId();
         LocalDateTime start = startDate.atStartOfDay();
         LocalDateTime end = endDate.plusDays(1).atStartOfDay();
 
-        Map<String, BigDecimal> byMethod = buildByMethodMap(start, end);
+        Map<String, BigDecimal> byMethod = buildByMethodMap(hospitalId, start, end);
         BigDecimal total = byMethod.values().stream().reduce(BigDecimal.ZERO, BigDecimal::add);
 
         Map<String, Object> report = new LinkedHashMap<>();
@@ -65,30 +74,42 @@ public class ReportService {
         return report;
     }
 
-    private Map<String, BigDecimal> buildByMethodMap(LocalDateTime start, LocalDateTime end) {
+    private Map<String, BigDecimal> buildByMethodMap(Long hospitalId, LocalDateTime start, LocalDateTime end) {
         Map<String, BigDecimal> byMethod = new LinkedHashMap<>();
         for (String m : new String[]{"CASH", "MPESA", "CARD", "BANK_TRANSFER", "INSURANCE", "DONATION"}) {
             byMethod.put(m, BigDecimal.ZERO);
         }
-        for (Object[] row : paymentRepository.sumByMethodInRange(start, end)) {
+        List<Object[]> rows = hospitalId != null
+                ? paymentRepository.sumByMethodInRange(hospitalId, start, end)
+                : paymentRepository.sumByMethodInRange(start, end);
+        for (Object[] row : rows) {
             byMethod.put(row[0].toString(), (BigDecimal) row[1]);
         }
         return byMethod;
     }
 
     public Map<String, Object> getPatientReport(LocalDate startDate, LocalDate endDate) {
+        Long hospitalId = TenantContext.getCurrentHospitalId();
         LocalDateTime start = startDate.atStartOfDay();
         LocalDateTime end = endDate.plusDays(1).atStartOfDay();
+
+        long newPatients = hospitalId != null
+                ? patientRepository.countByHospitalIdAndCreatedAtBetween(hospitalId, start, end)
+                : patientRepository.countByCreatedAtBetween(start, end);
+        long totalVisits = hospitalId != null
+                ? visitRepository.countByHospitalIdAndCreatedAtBetween(hospitalId, start, end)
+                : visitRepository.countByCreatedAtBetween(start, end);
 
         Map<String, Object> report = new HashMap<>();
         report.put("startDate", startDate);
         report.put("endDate", endDate);
-        report.put("newPatients", patientRepository.countByCreatedAtBetween(start, end));
-        report.put("totalVisits", visitRepository.countByCreatedAtBetween(start, end));
+        report.put("newPatients", newPatients);
+        report.put("totalVisits", totalVisits);
         return report;
     }
 
     public Map<String, Object> getMohReport(LocalDate startDate, LocalDate endDate) {
+        Long hospitalId = TenantContext.getCurrentHospitalId();
         LocalDateTime start = startDate.atStartOfDay();
         LocalDateTime end = endDate.plusDays(1).atStartOfDay();
 
@@ -97,24 +118,36 @@ public class ReportService {
         report.put("endDate", endDate.toString());
 
         // ── OUTPATIENT ATTENDANCE ──
-        long totalVisits = visitRepository.countByCreatedAtBetween(start, end);
-        long newAttendances = visitRepository.countNewPatientVisitsInRange(start, end);
+        long totalVisits = hospitalId != null
+                ? visitRepository.countByHospitalIdAndCreatedAtBetween(hospitalId, start, end)
+                : visitRepository.countByCreatedAtBetween(start, end);
+        long newAttendances = hospitalId != null
+                ? visitRepository.countNewPatientVisitsInRange(hospitalId, start, end)
+                : visitRepository.countNewPatientVisitsInRange(start, end);
         long reAttendances = totalVisits - newAttendances;
 
         Map<String, Long> byGender = new LinkedHashMap<>();
         byGender.put("MALE", 0L); byGender.put("FEMALE", 0L); byGender.put("OTHER", 0L);
-        for (Object[] row : visitRepository.countByGenderInRange(start, end)) {
+        List<Object[]> genderRows = hospitalId != null
+                ? visitRepository.countByGenderInRange(hospitalId, start, end)
+                : visitRepository.countByGenderInRange(start, end);
+        for (Object[] row : genderRows) {
             byGender.put(row[0].toString(), ((Number) row[1]).longValue());
         }
 
         Map<String, Long> byVisitType = new LinkedHashMap<>();
         byVisitType.put("OPD", 0L); byVisitType.put("EMERGENCY", 0L); byVisitType.put("IPD", 0L);
-        for (Object[] row : visitRepository.countByVisitTypeInRange(start, end)) {
+        List<Object[]> typeRows = hospitalId != null
+                ? visitRepository.countByVisitTypeInRange(hospitalId, start, end)
+                : visitRepository.countByVisitTypeInRange(start, end);
+        for (Object[] row : typeRows) {
             byVisitType.put(row[0].toString(), ((Number) row[1]).longValue());
         }
 
         // Age groups from patient DOBs
-        List<LocalDate> dobs = visitRepository.findPatientDobsInRange(start, end);
+        List<LocalDate> dobs = hospitalId != null
+                ? visitRepository.findPatientDobsInRange(hospitalId, start, end)
+                : visitRepository.findPatientDobsInRange(start, end);
         Map<String, Long> byAgeGroup = new LinkedHashMap<>();
         byAgeGroup.put("Under 1 year", 0L);
         byAgeGroup.put("1 - 4 years", 0L);
@@ -141,9 +174,15 @@ public class ReportService {
         report.put("outpatient", outpatient);
 
         // ── INPATIENT STATISTICS ──
-        long admissionsInPeriod = admissionRepository.countInRange(start, end);
-        long dischargesInPeriod = admissionRepository.countDischargedInRange(start, end);
-        long currentInpatients = admissionRepository.countByStatus(AdmissionStatus.ADMITTED);
+        long admissionsInPeriod = hospitalId != null
+                ? admissionRepository.countInRange(hospitalId, start, end)
+                : admissionRepository.countInRange(start, end);
+        long dischargesInPeriod = hospitalId != null
+                ? admissionRepository.countDischargedInRange(hospitalId, start, end)
+                : admissionRepository.countDischargedInRange(start, end);
+        long currentInpatients = hospitalId != null
+                ? admissionRepository.countByHospitalIdAndStatus(hospitalId, AdmissionStatus.ADMITTED)
+                : admissionRepository.countByStatus(AdmissionStatus.ADMITTED);
 
         Map<String, Object> inpatient = new LinkedHashMap<>();
         inpatient.put("admissions", admissionsInPeriod);
@@ -152,7 +191,9 @@ public class ReportService {
         report.put("inpatient", inpatient);
 
         // ── MORBIDITY TOP 10 ──
-        List<Object[]> morbRows = visitRepository.getMorbidityData(start, end);
+        List<Object[]> morbRows = hospitalId != null
+                ? visitRepository.getMorbidityData(hospitalId, start, end)
+                : visitRepository.getMorbidityData(start, end);
         List<Map<String, Object>> morbidity = new ArrayList<>();
         int rank = 1;
         long totalCases = morbRows.stream().mapToLong(r -> ((Number) r[2]).longValue()).sum();
@@ -171,12 +212,21 @@ public class ReportService {
         report.put("totalDiagnosedCases", totalCases);
 
         // ── LABORATORY SERVICES ──
-        long labTotal = labOrderRepository.countInRange(start, end);
-        long labCompleted = labOrderRepository.countCompletedInRange(start, end);
-        long labAbnormal = labOrderRepository.countAbnormalInRange(start, end);
+        long labTotal = hospitalId != null
+                ? labOrderRepository.countInRange(hospitalId, start, end)
+                : labOrderRepository.countInRange(start, end);
+        long labCompleted = hospitalId != null
+                ? labOrderRepository.countCompletedInRange(hospitalId, start, end)
+                : labOrderRepository.countCompletedInRange(start, end);
+        long labAbnormal = hospitalId != null
+                ? labOrderRepository.countAbnormalInRange(hospitalId, start, end)
+                : labOrderRepository.countAbnormalInRange(start, end);
 
         Map<String, Long> byTestCategory = new LinkedHashMap<>();
-        for (Object[] row : labOrderRepository.countByTestCategoryInRange(start, end)) {
+        List<Object[]> labCatRows = hospitalId != null
+                ? labOrderRepository.countByTestCategoryInRange(hospitalId, start, end)
+                : labOrderRepository.countByTestCategoryInRange(start, end);
+        for (Object[] row : labCatRows) {
             byTestCategory.put(row[0] != null ? row[0].toString() : "Uncategorised", ((Number) row[1]).longValue());
         }
 
@@ -189,9 +239,14 @@ public class ReportService {
         report.put("laboratory", laboratory);
 
         // ── IMAGING SERVICES ──
-        long imagingTotal = imagingOrderRepository.countInRange(start, end);
+        long imagingTotal = hospitalId != null
+                ? imagingOrderRepository.countInRange(hospitalId, start, end)
+                : imagingOrderRepository.countInRange(start, end);
         Map<String, Long> byImagingType = new LinkedHashMap<>();
-        for (Object[] row : imagingOrderRepository.countByTypeInRange(start, end)) {
+        List<Object[]> imgRows = hospitalId != null
+                ? imagingOrderRepository.countByTypeInRange(hospitalId, start, end)
+                : imagingOrderRepository.countByTypeInRange(start, end);
+        for (Object[] row : imgRows) {
             byImagingType.put(row[0].toString(), ((Number) row[1]).longValue());
         }
 
@@ -201,8 +256,12 @@ public class ReportService {
         report.put("imaging", imaging);
 
         // ── PHARMACY SERVICES ──
-        long rxTotal = prescriptionRepository.countInRange(start, end);
-        long rxDispensed = prescriptionRepository.countDispensedInRange(start, end);
+        long rxTotal = hospitalId != null
+                ? prescriptionRepository.countInRange(hospitalId, start, end)
+                : prescriptionRepository.countInRange(start, end);
+        long rxDispensed = hospitalId != null
+                ? prescriptionRepository.countDispensedInRange(hospitalId, start, end)
+                : prescriptionRepository.countDispensedInRange(start, end);
 
         Map<String, Object> pharmacy = new LinkedHashMap<>();
         pharmacy.put("totalPrescriptions", rxTotal);
@@ -211,9 +270,15 @@ public class ReportService {
         report.put("pharmacy", pharmacy);
 
         // ── FINANCIAL SUMMARY ──
-        BigDecimal totalBilled = billingRepository.sumRevenueByDateRange(start, end);
-        BigDecimal totalCollected = paymentRepository.sumPaymentsByDateRange(start, end);
-        BigDecimal totalExpenses = expenseRepository.sumExpensesByDateRange(startDate, endDate);
+        BigDecimal totalBilled = hospitalId != null
+                ? billingRepository.sumRevenueByDateRange(hospitalId, start, end)
+                : billingRepository.sumRevenueByDateRange(start, end);
+        BigDecimal totalCollected = hospitalId != null
+                ? paymentRepository.sumPaymentsByDateRange(hospitalId, start, end)
+                : paymentRepository.sumPaymentsByDateRange(start, end);
+        BigDecimal totalExpenses = hospitalId != null
+                ? expenseRepository.sumExpensesByDateRange(hospitalId, startDate, endDate)
+                : expenseRepository.sumExpensesByDateRange(startDate, endDate);
 
         Map<String, Object> financial = new LinkedHashMap<>();
         financial.put("totalBilled", totalBilled);
@@ -226,10 +291,13 @@ public class ReportService {
     }
 
     public List<Map<String, Object>> getMorbidityReport(LocalDate startDate, LocalDate endDate) {
+        Long hospitalId = TenantContext.getCurrentHospitalId();
         LocalDateTime start = startDate.atStartOfDay();
         LocalDateTime end = endDate.plusDays(1).atStartOfDay();
 
-        List<Object[]> rows = visitRepository.getMorbidityData(start, end);
+        List<Object[]> rows = hospitalId != null
+                ? visitRepository.getMorbidityData(hospitalId, start, end)
+                : visitRepository.getMorbidityData(start, end);
         List<Map<String, Object>> result = new ArrayList<>();
         for (Object[] row : rows) {
             Map<String, Object> entry = new HashMap<>();

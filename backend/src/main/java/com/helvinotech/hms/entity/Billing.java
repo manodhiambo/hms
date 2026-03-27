@@ -12,7 +12,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Entity
-@Table(name = "billings")
+@Table(name = "billings",
+       uniqueConstraints = @UniqueConstraint(name = "uq_invoice_number_hospital",
+               columnNames = {"invoice_number", "hospital_id"}))
 @Getter @Setter
 @NoArgsConstructor @AllArgsConstructor
 @Builder
@@ -22,7 +24,7 @@ public class Billing {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false, unique = true)
+    @Column(name = "invoice_number", nullable = false)
     private String invoiceNumber;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -57,12 +59,13 @@ public class Billing {
     @Builder.Default
     private List<Payment> payments = new ArrayList<>();
 
-    // Optional notes on the invoice
     @Column(columnDefinition = "TEXT")
     private String notes;
 
-    // Effective billing date (for back-dating). When set, used instead of createdAt for display/reports.
     private java.time.LocalDate billedDate;
+
+    @Column(name = "hospital_id")
+    private Long hospitalId;
 
     @CreationTimestamp
     private LocalDateTime createdAt;

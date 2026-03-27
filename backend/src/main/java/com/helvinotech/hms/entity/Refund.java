@@ -11,7 +11,9 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "refunds")
+@Table(name = "refunds",
+       uniqueConstraints = @UniqueConstraint(name = "uq_refund_number_hospital",
+               columnNames = {"refund_number", "hospital_id"}))
 @Getter @Setter
 @NoArgsConstructor @AllArgsConstructor
 @Builder
@@ -21,7 +23,7 @@ public class Refund {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false, unique = true)
+    @Column(name = "refund_number", nullable = false)
     private String refundNumber;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -61,6 +63,9 @@ public class Refund {
     private User processedBy;
 
     private LocalDateTime processedAt;
+
+    @Column(name = "hospital_id")
+    private Long hospitalId;
 
     @CreationTimestamp
     private LocalDateTime createdAt;

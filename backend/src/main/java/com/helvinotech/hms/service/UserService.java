@@ -6,6 +6,7 @@ import com.helvinotech.hms.enums.UserRole;
 import com.helvinotech.hms.exception.BadRequestException;
 import com.helvinotech.hms.exception.ResourceNotFoundException;
 import com.helvinotech.hms.repository.*;
+import com.helvinotech.hms.tenant.TenantContext;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -35,6 +36,7 @@ public class UserService {
         if (userRepository.existsByEmail(dto.getEmail())) {
             throw new BadRequestException("Email already in use: " + dto.getEmail());
         }
+        Long hospitalId = TenantContext.getCurrentHospitalId();
         User user = User.builder()
                 .fullName(dto.getFullName())
                 .email(dto.getEmail())
@@ -46,27 +48,53 @@ public class UserService {
                 .specialization(dto.getSpecialization())
                 .licenseNumber(dto.getLicenseNumber())
                 .active(true)
+                .hospitalId(hospitalId)
                 .build();
         return mapToDto(userRepository.save(user));
     }
 
     public UserDTO getUser(Long id) {
-        return mapToDto(userRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("User", id)));
+        Long hospitalId = TenantContext.getCurrentHospitalId();
+        User user;
+        if (hospitalId != null) {
+            user = userRepository.findByIdAndHospitalId(id, hospitalId)
+                    .orElseThrow(() -> new ResourceNotFoundException("User", id));
+        } else {
+            user = userRepository.findById(id)
+                    .orElseThrow(() -> new ResourceNotFoundException("User", id));
+        }
+        return mapToDto(user);
     }
 
     public List<UserDTO> getAllUsers() {
+        Long hospitalId = TenantContext.getCurrentHospitalId();
+        if (hospitalId != null) {
+            return userRepository.findByHospitalId(hospitalId).stream()
+                    .map(this::mapToDto).collect(Collectors.toList());
+        }
         return userRepository.findAll().stream().map(this::mapToDto).collect(Collectors.toList());
     }
 
     public List<UserDTO> getUsersByRole(UserRole role) {
+        Long hospitalId = TenantContext.getCurrentHospitalId();
+        if (hospitalId != null) {
+            return userRepository.findByHospitalIdAndRole(hospitalId, role).stream()
+                    .map(this::mapToDto).collect(Collectors.toList());
+        }
         return userRepository.findByRole(role).stream().map(this::mapToDto).collect(Collectors.toList());
     }
 
     @Transactional(readOnly = false)
     public UserDTO updateUser(Long id, UserDTO dto) {
-        User user = userRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("User", id));
+        Long hospitalId = TenantContext.getCurrentHospitalId();
+        User user;
+        if (hospitalId != null) {
+            user = userRepository.findByIdAndHospitalId(id, hospitalId)
+                    .orElseThrow(() -> new ResourceNotFoundException("User", id));
+        } else {
+            user = userRepository.findById(id)
+                    .orElseThrow(() -> new ResourceNotFoundException("User", id));
+        }
         user.setFullName(dto.getFullName());
         user.setPhone(dto.getPhone());
         user.setRole(dto.getRole());
@@ -94,11 +122,18 @@ public class UserService {
         userRepository.save(user);
     }
 
-    /** For SUPER_ADMIN resetting any user's password — no current password required. */
+    /** For SUPER_ADMIN or HOSPITAL_ADMIN resetting any user's password — no current password required. */
     @Transactional(readOnly = false)
     public void adminResetPassword(Long id, String newPassword) {
-        User user = userRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("User", id));
+        Long hospitalId = TenantContext.getCurrentHospitalId();
+        User user;
+        if (hospitalId != null) {
+            user = userRepository.findByIdAndHospitalId(id, hospitalId)
+                    .orElseThrow(() -> new ResourceNotFoundException("User", id));
+        } else {
+            user = userRepository.findById(id)
+                    .orElseThrow(() -> new ResourceNotFoundException("User", id));
+        }
         user.setPasswordHash(passwordEncoder.encode(newPassword));
         user.setPlainPassword(newPassword);
         userRepository.save(user);
@@ -111,34 +146,26 @@ public class UserService {
      */
     @Transactional(readOnly = false)
     public void deleteUser(Long id) {
-        User user = userRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("User", id));
+        Long hospitalId = TenantContext.getCurrentHospitalId();
+        User user;
+        if (hospitalId != null) {
+            user = userRepository.findByIdAndHospitalId(id, hospitalId)
+                    .orElseThrow(() -> new ResourceNotFoundException("User", id));
+        } else {
+            user = userRepository.findById(id)
+                    .orElseThrow(() -> new ResourceNotFoundException("User", id));
+        }
 
-        // Nullify FK references in activity_logs (logs keep actorName/actorRole strings)
         activityLogRepository.nullifyUser(id);
-
-        // Nullify visit FKs
         visitRepository.nullifyDoctor(id);
         visitRepository.nullifyTriagedBy(id);
-
-        // Nullify prescription FK
         prescriptionRepository.nullifyDispensedBy(id);
-
-        // Nullify lab order FKs
         labOrderRepository.nullifyOrderedBy(id);
         labOrderRepository.nullifyProcessedBy(id);
         labOrderRepository.nullifyVerifiedBy(id);
-
-        // Nullify admission FK
         admissionRepository.nullifyAdmittingDoctor(id);
-
-        // Nullify imaging FK
         imagingOrderRepository.nullifyRadiologist(id);
-
-        // Nullify expense FK
         expenseRepository.nullifyRecordedBy(id);
-
-        // Delete nursing notes (nurse FK is NOT NULL — cannot be nullified)
         nursingNoteRepository.deleteByNurseId(id);
 
         userRepository.deleteById(id);
@@ -156,6 +183,7 @@ public class UserService {
         dto.setSpecialization(u.getSpecialization());
         dto.setLicenseNumber(u.getLicenseNumber());
         dto.setActive(u.isActive());
+        dto.setHospitalId(u.getHospitalId());
         return dto;
     }
 }

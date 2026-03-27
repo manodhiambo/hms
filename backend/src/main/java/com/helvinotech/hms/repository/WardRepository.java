@@ -8,5 +8,9 @@ import java.util.List;
 
 @Repository
 public interface WardRepository extends JpaRepository<Ward, Long> {
+    List<Ward> findByHospitalIdAndActiveTrue(Long hospitalId);
+    List<Ward> findByHospitalId(Long hospitalId);
+
+    // Legacy
     List<Ward> findByActiveTrue();
 }

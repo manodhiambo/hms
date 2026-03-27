@@ -48,6 +48,9 @@ public class Prescription {
 
     private LocalDateTime dispensedAt;
 
+    @Column(name = "hospital_id")
+    private Long hospitalId;
+
     @CreationTimestamp
     private LocalDateTime createdAt;
 }

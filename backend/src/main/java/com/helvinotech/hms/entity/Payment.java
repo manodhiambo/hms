@@ -38,6 +38,9 @@ public class Payment {
     @JoinColumn(name = "received_by")
     private User receivedBy;
 
+    @Column(name = "hospital_id")
+    private Long hospitalId;
+
     @CreationTimestamp
     private LocalDateTime createdAt;
 }

@@ -7,7 +7,7 @@ import { useHospitalStore } from '../store/hospitalStore';
 import {
   LayoutDashboard, Users, CalendarDays, Stethoscope, Pill, FlaskConical, Scan,
   CreditCard, Shield, BedDouble, UserCog, BarChart3, Bell, LogOut, Settings,
-  Heart, ClipboardList, Activity, ChevronRight, X, Menu, TrendingDown, ScrollText, RotateCcw, Tag,
+  Heart, ClipboardList, Activity, ChevronRight, X, Menu, TrendingDown, ScrollText, RotateCcw, Tag, Building2,
 } from 'lucide-react';
 
 const baseNavItems = [
@@ -82,10 +82,12 @@ export default function Layout() {
   const showQueue = role === 'DOCTOR' || role === 'NURSE';
   const isAdmin   = role === 'SUPER_ADMIN';
 
-  const navItems = (showQueue
-    ? [baseNavItems[0], { path: '/my-queue', label: 'My Queue', icon: ClipboardList }, ...baseNavItems.slice(1)]
-    : baseNavItems
-  ).filter(item => (item.path !== '/users' && item.path !== '/audit') || isAdmin);
+  const adminOnlyPaths = ['/users', '/audit', '/hospitals'];
+  const navItemsBase = [
+    ...(showQueue ? [baseNavItems[0], { path: '/my-queue', label: 'My Queue', icon: ClipboardList }, ...baseNavItems.slice(1)] : baseNavItems),
+    ...(isAdmin ? [{ path: '/hospitals', label: 'Hospitals', icon: Building2 }] : []),
+  ];
+  const navItems = navItemsBase.filter(item => !adminOnlyPaths.includes(item.path) || isAdmin);
 
   const initials = fullName?.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase() || '?';
 
@@ -106,8 +108,8 @@ export default function Layout() {
             <Heart className="w-5 h-5 text-white" fill="currentColor" />
           </div>
           <div>
-            <h1 className="text-sm font-bold text-gray-900 leading-tight">Ogada Church</h1>
-            <p className="text-xs text-primary-500 font-semibold tracking-wide">Medical Clinic</p>
+            <h1 className="text-sm font-bold text-gray-900 leading-tight">Hospital Information</h1>
+            <p className="text-xs text-primary-500 font-semibold tracking-wide">Manager</p>
           </div>
         </div>
 
@@ -178,7 +180,7 @@ export default function Layout() {
 
           {/* Left: page title area (desktop) — empty, sidebar has brand */}
           <div className="hidden lg:flex items-center gap-2">
-            <span className="text-sm font-semibold text-gray-500">Ogada Church Medical Clinic</span>
+            <span className="text-sm font-semibold text-gray-500">Hospital Information Manager</span>
           </div>
 
           {/* Right actions */}

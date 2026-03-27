@@ -4,6 +4,7 @@ import com.helvinotech.hms.dto.ActivityLogDTO;
 import com.helvinotech.hms.entity.ActivityLog;
 import com.helvinotech.hms.entity.User;
 import com.helvinotech.hms.repository.ActivityLogRepository;
+import com.helvinotech.hms.tenant.TenantContext;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -24,6 +25,7 @@ public class ActivityLogService {
     /** Log with an explicit User object (for login, deletion, etc.) */
     @Transactional(readOnly = false)
     public void log(User user, String action, String entityType, Long entityId, String details, String ipAddress) {
+        Long hospitalId = (user != null) ? user.getHospitalId() : TenantContext.getCurrentHospitalId();
         ActivityLog log = ActivityLog.builder()
                 .user(user)
                 .actorName(user != null ? user.getFullName() : "System")
@@ -33,6 +35,7 @@ public class ActivityLogService {
                 .entityId(entityId)
                 .details(details)
                 .ipAddress(ipAddress)
+                .hospitalId(hospitalId)
                 .build();
         activityLogRepository.save(log);
     }
@@ -46,6 +49,10 @@ public class ActivityLogService {
 
     @Transactional(readOnly = true)
     public Page<ActivityLogDTO> getAllLogs(Pageable pageable) {
+        Long hospitalId = TenantContext.getCurrentHospitalId();
+        if (hospitalId != null) {
+            return activityLogRepository.findByHospitalIdOrderByCreatedAtDesc(hospitalId, pageable).map(this::mapToDto);
+        }
         return activityLogRepository.findAllByOrderByCreatedAtDesc(pageable).map(this::mapToDto);
     }
 
@@ -53,6 +60,10 @@ public class ActivityLogService {
     public Page<ActivityLogDTO> getLogsByFilters(Long userId, String action,
                                                   LocalDateTime start, LocalDateTime end,
                                                   Pageable pageable) {
+        Long hospitalId = TenantContext.getCurrentHospitalId();
+        if (hospitalId != null) {
+            return activityLogRepository.findByFilters(hospitalId, userId, action, start, end, pageable).map(this::mapToDto);
+        }
         return activityLogRepository.findByFilters(userId, action, start, end, pageable).map(this::mapToDto);
     }
 

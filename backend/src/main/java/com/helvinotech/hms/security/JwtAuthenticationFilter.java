@@ -1,5 +1,6 @@
 package com.helvinotech.hms.security;
 
+import com.helvinotech.hms.tenant.TenantContext;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -27,20 +28,30 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     protected void doFilterInternal(HttpServletRequest request,
                                     HttpServletResponse response,
                                     FilterChain filterChain) throws ServletException, IOException {
-        String token = getTokenFromRequest(request);
+        try {
+            String token = getTokenFromRequest(request);
 
-        if (StringUtils.hasText(token) && tokenProvider.validateToken(token)) {
-            String username = tokenProvider.getUsernameFromToken(token);
-            UserDetails userDetails = userDetailsService.loadUserByUsername(username);
+            if (StringUtils.hasText(token) && tokenProvider.validateToken(token)) {
+                String username = tokenProvider.getUsernameFromToken(token);
+                Long hospitalId = tokenProvider.getHospitalIdFromToken(token);
 
-            UsernamePasswordAuthenticationToken authToken =
-                    new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
-            authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                // Set tenant context for this request thread
+                TenantContext.setCurrentHospitalId(hospitalId);
 
-            SecurityContextHolder.getContext().setAuthentication(authToken);
+                UserDetails userDetails = userDetailsService.loadUserByUsername(username);
+
+                UsernamePasswordAuthenticationToken authToken =
+                        new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
+                authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+
+                SecurityContextHolder.getContext().setAuthentication(authToken);
+            }
+
+            filterChain.doFilter(request, response);
+        } finally {
+            // Always clear tenant context after request to prevent leakage between threads
+            TenantContext.clear();
         }
-
-        filterChain.doFilter(request, response);
     }
 
     private String getTokenFromRequest(HttpServletRequest request) {

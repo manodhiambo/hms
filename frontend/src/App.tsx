@@ -26,6 +26,7 @@ import TriagePage from './pages/triage/TriagePage';
 import ExpensesPage from './pages/expenses/ExpensesPage';
 import AuditPage from './pages/audit/AuditPage';
 import ServicesPage from './pages/services/ServicesPage';
+import HospitalsPage from './pages/hospitals/HospitalsPage';
 
 const queryClient = new QueryClient({
   defaultOptions: { queries: { retry: 1, refetchOnWindowFocus: false } },
@@ -61,6 +62,7 @@ export default function App() {
             <Route path="/reports" element={<ReportsPage />} />
             <Route path="/notifications" element={<NotificationsPage />} />
             <Route path="/settings" element={<SettingsPage />} />
+            <Route path="/hospitals" element={<HospitalsPage />} />
           </Route>
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>

@@ -13,6 +13,25 @@ import java.time.LocalDateTime;
 
 @Repository
 public interface ActivityLogRepository extends JpaRepository<ActivityLog, Long> {
+    // Tenant-scoped
+    Page<ActivityLog> findByHospitalIdOrderByCreatedAtDesc(Long hospitalId, Pageable pageable);
+    Page<ActivityLog> findByHospitalIdAndUserIdOrderByCreatedAtDesc(Long hospitalId, Long userId, Pageable pageable);
+
+    @Query("SELECT a FROM ActivityLog a WHERE a.hospitalId = :hospitalId AND " +
+           "(:userId IS NULL OR a.user.id = :userId) AND " +
+           "(:action IS NULL OR LOWER(a.action) LIKE LOWER(CONCAT('%', :action, '%'))) AND " +
+           "(:start IS NULL OR a.createdAt >= :start) AND " +
+           "(:end IS NULL OR a.createdAt <= :end) " +
+           "ORDER BY a.createdAt DESC")
+    Page<ActivityLog> findByFilters(
+            @Param("hospitalId") Long hospitalId,
+            @Param("userId") Long userId,
+            @Param("action") String action,
+            @Param("start") LocalDateTime start,
+            @Param("end") LocalDateTime end,
+            Pageable pageable);
+
+    // Legacy / SUPER_ADMIN
     Page<ActivityLog> findAllByOrderByCreatedAtDesc(Pageable pageable);
     Page<ActivityLog> findByUserIdOrderByCreatedAtDesc(Long userId, Pageable pageable);
 

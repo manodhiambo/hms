@@ -9,6 +9,12 @@ import java.util.Optional;
 
 @Repository
 public interface InsuranceCompanyRepository extends JpaRepository<InsuranceCompany, Long> {
+    // Tenant-scoped
+    Optional<InsuranceCompany> findByNameAndHospitalId(String name, Long hospitalId);
+    List<InsuranceCompany> findByHospitalIdAndActiveTrue(Long hospitalId);
+    List<InsuranceCompany> findByHospitalId(Long hospitalId);
+
+    // Legacy
     Optional<InsuranceCompany> findByName(String name);
     List<InsuranceCompany> findByActiveTrue();
 }

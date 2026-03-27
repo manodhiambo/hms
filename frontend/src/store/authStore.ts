@@ -11,6 +11,8 @@ interface AuthState {
   role: UserRole | null;
   department: string | null;
   profilePicture: string | null;
+  hospitalId: number | null;
+  hospitalName: string | null;
   isAuthenticated: boolean;
   login: (data: AuthResponse) => void;
   logout: () => void;
@@ -32,6 +34,8 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   role: localStorage.getItem('role') as UserRole | null,
   department: localStorage.getItem('department'),
   profilePicture: getStoredPicture(),
+  hospitalId: localStorage.getItem('hospitalId') ? Number(localStorage.getItem('hospitalId')) : null,
+  hospitalName: localStorage.getItem('hospitalName'),
   isAuthenticated: !!localStorage.getItem('token'),
   login: (data) => {
     localStorage.setItem('token', data.token);
@@ -40,6 +44,10 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     localStorage.setItem('fullName', data.fullName);
     localStorage.setItem('email', data.email);
     localStorage.setItem('role', data.role);
+    if (data.hospitalId != null) localStorage.setItem('hospitalId', String(data.hospitalId));
+    else localStorage.removeItem('hospitalId');
+    if (data.hospitalName) localStorage.setItem('hospitalName', data.hospitalName);
+    else localStorage.removeItem('hospitalName');
     set({
       token: data.token,
       refreshToken: data.refreshToken,
@@ -47,6 +55,8 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       fullName: data.fullName,
       email: data.email,
       role: data.role,
+      hospitalId: data.hospitalId ?? null,
+      hospitalName: data.hospitalName ?? null,
       isAuthenticated: true,
     });
     // Fetch department after login
@@ -57,7 +67,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     set({
       token: null, refreshToken: null, userId: null,
       fullName: null, email: null, role: null, department: null,
-      profilePicture: null, isAuthenticated: false,
+      profilePicture: null, hospitalId: null, hospitalName: null, isAuthenticated: false,
     });
   },
   setProfilePicture: (src) => {

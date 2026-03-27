@@ -50,6 +50,9 @@ public class Appointment {
     @Builder.Default
     private boolean walkIn = false;
 
+    @Column(name = "hospital_id")
+    private Long hospitalId;
+
     @CreationTimestamp
     private LocalDateTime createdAt;
 }

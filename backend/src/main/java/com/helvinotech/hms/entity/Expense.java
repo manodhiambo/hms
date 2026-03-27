@@ -38,6 +38,9 @@ public class Expense {
     @JoinColumn(name = "recorded_by")
     private User recordedBy;
 
+    @Column(name = "hospital_id")
+    private Long hospitalId;
+
     @CreationTimestamp
     private LocalDateTime createdAt;
 }

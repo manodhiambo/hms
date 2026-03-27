@@ -8,6 +8,11 @@ import java.util.List;
 
 @Repository
 public interface LabTestRepository extends JpaRepository<LabTest, Long> {
+    // Tenant-scoped
+    List<LabTest> findByHospitalIdAndCategory(Long hospitalId, String category);
+    List<LabTest> findByHospitalIdAndActiveTrue(Long hospitalId);
+
+    // Legacy
     List<LabTest> findByCategory(String category);
     List<LabTest> findByActiveTrue();
 }

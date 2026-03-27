@@ -27,36 +27,63 @@ public class JwtTokenProvider {
         this.refreshExpiration = refreshExpiration;
     }
 
-    public String generateToken(Authentication authentication) {
+    public String generateToken(Authentication authentication, Long hospitalId) {
         UserDetails userDetails = (UserDetails) authentication.getPrincipal();
-        return buildToken(userDetails.getUsername(), jwtExpiration);
+        return buildToken(userDetails.getUsername(), jwtExpiration, hospitalId);
+    }
+
+    public String generateToken(String username, Long hospitalId) {
+        return buildToken(username, jwtExpiration, hospitalId);
+    }
+
+    public String generateRefreshToken(String username, Long hospitalId) {
+        return buildToken(username, refreshExpiration, hospitalId);
+    }
+
+    // Keep backward-compatible overloads (no hospitalId — used internally)
+    public String generateToken(Authentication authentication) {
+        return generateToken(authentication, null);
     }
 
     public String generateToken(String username) {
-        return buildToken(username, jwtExpiration);
+        return generateToken(username, null);
     }
 
     public String generateRefreshToken(String username) {
-        return buildToken(username, refreshExpiration);
+        return generateRefreshToken(username, null);
     }
 
-    private String buildToken(String subject, long expiration) {
+    private String buildToken(String subject, long expiration, Long hospitalId) {
         Date now = new Date();
-        return Jwts.builder()
+        JwtBuilder builder = Jwts.builder()
                 .subject(subject)
                 .issuedAt(now)
                 .expiration(new Date(now.getTime() + expiration))
-                .signWith(key)
-                .compact();
+                .signWith(key);
+        if (hospitalId != null) {
+            builder.claim("hospitalId", hospitalId);
+        }
+        return builder.compact();
     }
 
     public String getUsernameFromToken(String token) {
+        return getClaims(token).getSubject();
+    }
+
+    public Long getHospitalIdFromToken(String token) {
+        try {
+            return getClaims(token).get("hospitalId", Long.class);
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    private Claims getClaims(String token) {
         return Jwts.parser()
                 .verifyWith(key)
                 .build()
                 .parseSignedClaims(token)
-                .getPayload()
-                .getSubject();
+                .getPayload();
     }
 
     public boolean validateToken(String token) {

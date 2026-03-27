@@ -10,7 +10,9 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "insurance_claims")
+@Table(name = "insurance_claims",
+       uniqueConstraints = @UniqueConstraint(name = "uq_claim_number_hospital",
+               columnNames = {"claim_number", "hospital_id"}))
 @Getter @Setter
 @NoArgsConstructor @AllArgsConstructor
 @Builder
@@ -20,7 +22,7 @@ public class InsuranceClaim {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false, unique = true)
+    @Column(name = "claim_number", nullable = false)
     private String claimNumber;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -50,6 +52,9 @@ public class InsuranceClaim {
     private String remarks;
 
     private LocalDateTime submittedAt;
+
+    @Column(name = "hospital_id")
+    private Long hospitalId;
 
     @CreationTimestamp
     private LocalDateTime createdAt;

@@ -7,6 +7,7 @@ import com.helvinotech.hms.exception.ResourceNotFoundException;
 import com.helvinotech.hms.repository.BillingItemRepository;
 import com.helvinotech.hms.repository.BillingRepository;
 import com.helvinotech.hms.repository.MedicalServiceRepository;
+import com.helvinotech.hms.tenant.TenantContext;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -25,10 +26,18 @@ public class MedicalServiceService {
     private final BillingRepository billingRepository;
 
     public List<MedicalServiceDTO> getAll() {
+        Long hospitalId = TenantContext.getCurrentHospitalId();
+        if (hospitalId != null) {
+            return repository.findByHospitalIdOrderByCategory(hospitalId).stream().map(this::toDto).collect(Collectors.toList());
+        }
         return repository.findAllByOrderByCategory().stream().map(this::toDto).collect(Collectors.toList());
     }
 
     public List<MedicalServiceDTO> getActive() {
+        Long hospitalId = TenantContext.getCurrentHospitalId();
+        if (hospitalId != null) {
+            return repository.findByHospitalIdAndActiveTrueOrderByCategory(hospitalId).stream().map(this::toDto).collect(Collectors.toList());
+        }
         return repository.findByActiveTrueOrderByCategory().stream().map(this::toDto).collect(Collectors.toList());
     }
 
@@ -39,12 +48,14 @@ public class MedicalServiceService {
 
     @Transactional
     public MedicalServiceDTO create(MedicalServiceDTO dto) {
+        Long hospitalId = TenantContext.getCurrentHospitalId();
         MedicalService svc = MedicalService.builder()
                 .serviceName(dto.getServiceName())
                 .category(dto.getCategory())
                 .price(dto.getPrice())
                 .description(dto.getDescription())
                 .active(true)
+                .hospitalId(hospitalId)
                 .build();
         return toDto(repository.save(svc));
     }

@@ -13,6 +13,18 @@ import java.util.List;
 @Repository
 public interface PrescriptionRepository extends JpaRepository<Prescription, Long> {
     List<Prescription> findByVisitId(Long visitId);
+
+    // Tenant-scoped
+    List<Prescription> findByHospitalIdAndDispensedFalse(Long hospitalId);
+    List<Prescription> findByHospitalIdAndDispensedTrueOrderByDispensedAtDesc(Long hospitalId);
+
+    @Query("SELECT COUNT(p) FROM Prescription p WHERE p.hospitalId = :hospitalId AND p.createdAt BETWEEN :start AND :end")
+    long countInRange(@Param("hospitalId") Long hospitalId, @Param("start") LocalDateTime start, @Param("end") LocalDateTime end);
+
+    @Query("SELECT COUNT(p) FROM Prescription p WHERE p.hospitalId = :hospitalId AND p.createdAt BETWEEN :start AND :end AND p.dispensed = true")
+    long countDispensedInRange(@Param("hospitalId") Long hospitalId, @Param("start") LocalDateTime start, @Param("end") LocalDateTime end);
+
+    // Legacy
     List<Prescription> findByDispensedFalse();
     List<Prescription> findByDispensedTrueOrderByDispensedAtDesc();
 

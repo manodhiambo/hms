@@ -7,6 +7,7 @@ import com.helvinotech.hms.enums.ClaimStatus;
 import com.helvinotech.hms.exception.BadRequestException;
 import com.helvinotech.hms.exception.ResourceNotFoundException;
 import com.helvinotech.hms.repository.*;
+import com.helvinotech.hms.tenant.TenantContext;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -31,16 +32,28 @@ public class InsuranceService {
     // Companies
     @Transactional(readOnly = false)
     public InsuranceCompanyDTO createCompany(InsuranceCompanyDTO dto) {
-        companyRepository.findByName(dto.getName()).ifPresent(existing -> {
-            throw new BadRequestException("Insurance company '" + dto.getName() + "' already exists");
-        });
+        Long hospitalId = TenantContext.getCurrentHospitalId();
+        if (hospitalId != null) {
+            companyRepository.findByNameAndHospitalId(dto.getName(), hospitalId).ifPresent(existing -> {
+                throw new BadRequestException("Insurance company '" + dto.getName() + "' already exists");
+            });
+        } else {
+            companyRepository.findByName(dto.getName()).ifPresent(existing -> {
+                throw new BadRequestException("Insurance company '" + dto.getName() + "' already exists");
+            });
+        }
         InsuranceCompany c = new InsuranceCompany();
         mapCompanyDtoToEntity(dto, c);
         c.setActive(true);
+        c.setHospitalId(hospitalId);
         return mapCompanyToDto(companyRepository.save(c));
     }
 
     public List<InsuranceCompanyDTO> getAllCompanies() {
+        Long hospitalId = TenantContext.getCurrentHospitalId();
+        if (hospitalId != null) {
+            return companyRepository.findByHospitalIdAndActiveTrue(hospitalId).stream().map(this::mapCompanyToDto).collect(Collectors.toList());
+        }
         return companyRepository.findByActiveTrue().stream().map(this::mapCompanyToDto).collect(Collectors.toList());
     }
 
@@ -57,6 +70,7 @@ public class InsuranceService {
     // Claims
     @Transactional(readOnly = false)
     public InsuranceClaimDTO createClaim(InsuranceClaimDTO dto) {
+        Long hospitalId = TenantContext.getCurrentHospitalId();
         Billing billing = billingRepository.findById(dto.getBillingId())
                 .orElseThrow(() -> new ResourceNotFoundException("Billing", dto.getBillingId()));
         InsuranceCompany company = companyRepository.findById(dto.getInsuranceCompanyId())
@@ -71,11 +85,16 @@ public class InsuranceService {
                 .patient(patient)
                 .claimAmount(dto.getClaimAmount())
                 .remarks(dto.getRemarks())
+                .hospitalId(hospitalId)
                 .build();
         return mapClaimToDto(claimRepository.save(claim));
     }
 
     public Page<InsuranceClaimDTO> getClaimsByStatus(ClaimStatus status, Pageable pageable) {
+        Long hospitalId = TenantContext.getCurrentHospitalId();
+        if (hospitalId != null) {
+            return claimRepository.findByHospitalIdAndStatus(hospitalId, status, pageable).map(this::mapClaimToDto);
+        }
         return claimRepository.findByStatus(status, pageable).map(this::mapClaimToDto);
     }
 
@@ -91,6 +110,10 @@ public class InsuranceService {
     }
 
     public Page<InsuranceClaimDTO> getAllClaims(Pageable pageable) {
+        Long hospitalId = TenantContext.getCurrentHospitalId();
+        if (hospitalId != null) {
+            return claimRepository.findByHospitalId(hospitalId, pageable).map(this::mapClaimToDto);
+        }
         return claimRepository.findAll(pageable).map(this::mapClaimToDto);
     }
 

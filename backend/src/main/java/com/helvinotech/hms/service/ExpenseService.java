@@ -5,6 +5,7 @@ import com.helvinotech.hms.entity.Expense;
 import com.helvinotech.hms.exception.ResourceNotFoundException;
 import com.helvinotech.hms.repository.ExpenseRepository;
 import com.helvinotech.hms.repository.UserRepository;
+import com.helvinotech.hms.tenant.TenantContext;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -24,6 +25,7 @@ public class ExpenseService {
 
     @Transactional(readOnly = false)
     public ExpenseDTO createExpense(ExpenseDTO dto, Long recordedById) {
+        Long hospitalId = TenantContext.getCurrentHospitalId();
         Expense expense = Expense.builder()
                 .category(dto.getCategory())
                 .description(dto.getDescription())
@@ -31,6 +33,7 @@ public class ExpenseService {
                 .expenseDate(dto.getExpenseDate() != null ? dto.getExpenseDate() : LocalDate.now())
                 .referenceNumber(dto.getReferenceNumber())
                 .vendor(dto.getVendor())
+                .hospitalId(hospitalId)
                 .build();
         if (recordedById != null) {
             userRepository.findById(recordedById).ifPresent(expense::setRecordedBy);
@@ -39,14 +42,26 @@ public class ExpenseService {
     }
 
     public Page<ExpenseDTO> getAll(Pageable pageable) {
+        Long hospitalId = TenantContext.getCurrentHospitalId();
+        if (hospitalId != null) {
+            return expenseRepository.findByHospitalId(hospitalId, pageable).map(this::mapToDto);
+        }
         return expenseRepository.findAll(pageable).map(this::mapToDto);
     }
 
     public Page<ExpenseDTO> getByDateRange(LocalDate start, LocalDate end, Pageable pageable) {
+        Long hospitalId = TenantContext.getCurrentHospitalId();
+        if (hospitalId != null) {
+            return expenseRepository.findByHospitalIdAndExpenseDateBetween(hospitalId, start, end, pageable).map(this::mapToDto);
+        }
         return expenseRepository.findByExpenseDateBetween(start, end, pageable).map(this::mapToDto);
     }
 
     public BigDecimal getTotalByDateRange(LocalDate start, LocalDate end) {
+        Long hospitalId = TenantContext.getCurrentHospitalId();
+        if (hospitalId != null) {
+            return expenseRepository.sumExpensesByDateRange(hospitalId, start, end);
+        }
         return expenseRepository.sumExpensesByDateRange(start, end);
     }
 

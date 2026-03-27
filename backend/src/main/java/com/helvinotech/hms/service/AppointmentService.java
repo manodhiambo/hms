@@ -9,6 +9,7 @@ import com.helvinotech.hms.exception.ResourceNotFoundException;
 import com.helvinotech.hms.repository.AppointmentRepository;
 import com.helvinotech.hms.repository.PatientRepository;
 import com.helvinotech.hms.repository.UserRepository;
+import com.helvinotech.hms.tenant.TenantContext;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -35,6 +36,7 @@ public class AppointmentService {
         User doctor = userRepository.findById(dto.getDoctorId())
                 .orElseThrow(() -> new ResourceNotFoundException("Doctor", dto.getDoctorId()));
 
+        Long hospitalId = TenantContext.getCurrentHospitalId();
         Appointment apt = Appointment.builder()
                 .patient(patient)
                 .doctor(doctor)
@@ -44,6 +46,7 @@ public class AppointmentService {
                 .appointmentType(dto.getAppointmentType())
                 .notes(dto.getNotes())
                 .walkIn(dto.isWalkIn())
+                .hospitalId(hospitalId)
                 .build();
         apt = appointmentRepository.save(apt);
         return mapToDto(apt);
@@ -55,14 +58,27 @@ public class AppointmentService {
     }
 
     public Page<AppointmentDTO> getAppointmentsByDate(LocalDate date, Pageable pageable) {
+        Long hospitalId = TenantContext.getCurrentHospitalId();
+        if (hospitalId != null) {
+            return appointmentRepository.findByHospitalIdAndAppointmentDate(hospitalId, date, pageable).map(this::mapToDto);
+        }
         return appointmentRepository.findByAppointmentDate(date, pageable).map(this::mapToDto);
     }
 
     public Page<AppointmentDTO> getAppointmentsByPatient(Long patientId, Pageable pageable) {
+        Long hospitalId = TenantContext.getCurrentHospitalId();
+        if (hospitalId != null) {
+            return appointmentRepository.findByPatientIdAndHospitalIdOrderByAppointmentDateDesc(patientId, hospitalId, pageable).map(this::mapToDto);
+        }
         return appointmentRepository.findByPatientIdOrderByAppointmentDateDesc(patientId, pageable).map(this::mapToDto);
     }
 
     public List<AppointmentDTO> getDoctorAppointments(Long doctorId, LocalDate date) {
+        Long hospitalId = TenantContext.getCurrentHospitalId();
+        if (hospitalId != null) {
+            return appointmentRepository.findByDoctorIdAndHospitalIdAndAppointmentDate(doctorId, hospitalId, date)
+                    .stream().map(this::mapToDto).collect(Collectors.toList());
+        }
         return appointmentRepository.findByDoctorIdAndAppointmentDate(doctorId, date)
                 .stream().map(this::mapToDto).collect(Collectors.toList());
     }
@@ -76,10 +92,19 @@ public class AppointmentService {
     }
 
     public long countTodayAppointments() {
+        Long hospitalId = TenantContext.getCurrentHospitalId();
+        if (hospitalId != null) {
+            return appointmentRepository.countByHospitalIdAndAppointmentDateAndStatus(
+                    hospitalId, LocalDate.now(), AppointmentStatus.SCHEDULED);
+        }
         return appointmentRepository.countByAppointmentDateAndStatus(LocalDate.now(), AppointmentStatus.SCHEDULED);
     }
 
     public Page<AppointmentDTO> getAllAppointments(Pageable pageable) {
+        Long hospitalId = TenantContext.getCurrentHospitalId();
+        if (hospitalId != null) {
+            return appointmentRepository.findByHospitalIdAndAppointmentDate(hospitalId, LocalDate.now(), pageable).map(this::mapToDto);
+        }
         return appointmentRepository.findAll(pageable).map(this::mapToDto);
     }
 

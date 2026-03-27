@@ -15,6 +15,18 @@ import java.util.List;
 
 @Repository
 public interface AdmissionRepository extends JpaRepository<Admission, Long> {
+    // Tenant-scoped
+    Page<Admission> findByHospitalIdAndStatus(Long hospitalId, AdmissionStatus status, Pageable pageable);
+    List<Admission> findByHospitalIdAndPatientId(Long hospitalId, Long patientId);
+    long countByHospitalIdAndStatus(Long hospitalId, AdmissionStatus status);
+
+    @Query("SELECT COUNT(a) FROM Admission a WHERE a.hospitalId = :hospitalId AND a.createdAt BETWEEN :start AND :end")
+    long countInRange(@Param("hospitalId") Long hospitalId, @Param("start") LocalDateTime start, @Param("end") LocalDateTime end);
+
+    @Query("SELECT COUNT(a) FROM Admission a WHERE a.hospitalId = :hospitalId AND a.dischargedAt BETWEEN :start AND :end")
+    long countDischargedInRange(@Param("hospitalId") Long hospitalId, @Param("start") LocalDateTime start, @Param("end") LocalDateTime end);
+
+    // Legacy / SUPER_ADMIN
     Page<Admission> findByStatus(AdmissionStatus status, Pageable pageable);
     List<Admission> findByPatientId(Long patientId);
     long countByStatus(AdmissionStatus status);

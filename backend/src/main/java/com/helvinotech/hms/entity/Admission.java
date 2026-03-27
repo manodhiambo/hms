@@ -48,6 +48,9 @@ public class Admission {
 
     private LocalDateTime dischargedAt;
 
+    @Column(name = "hospital_id")
+    private Long hospitalId;
+
     @CreationTimestamp
     private LocalDateTime createdAt;
 }

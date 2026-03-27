@@ -7,6 +7,7 @@ import com.helvinotech.hms.enums.LabOrderStatus;
 import com.helvinotech.hms.enums.TriageStatus;
 import com.helvinotech.hms.exception.ResourceNotFoundException;
 import com.helvinotech.hms.repository.*;
+import com.helvinotech.hms.tenant.TenantContext;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -30,13 +31,20 @@ public class LabService {
     // Lab Test CRUD
     @Transactional(readOnly = false)
     public LabTestDTO createTest(LabTestDTO dto) {
+        Long hospitalId = TenantContext.getCurrentHospitalId();
         LabTest test = new LabTest();
         mapTestDtoToEntity(dto, test);
         test.setActive(true);
+        test.setHospitalId(hospitalId);
         return mapTestToDto(labTestRepository.save(test));
     }
 
     public List<LabTestDTO> getAllTests() {
+        Long hospitalId = TenantContext.getCurrentHospitalId();
+        if (hospitalId != null) {
+            return labTestRepository.findByHospitalIdAndActiveTrue(hospitalId).stream()
+                    .map(this::mapTestToDto).collect(Collectors.toList());
+        }
         return labTestRepository.findByActiveTrue().stream().map(this::mapTestToDto).collect(Collectors.toList());
     }
 
@@ -58,8 +66,9 @@ public class LabService {
         User orderedBy = userRepository.findById(orderedById)
                 .orElseThrow(() -> new ResourceNotFoundException("User", orderedById));
 
+        Long hospitalId = TenantContext.getCurrentHospitalId();
         LabOrder order = LabOrder.builder()
-                .visit(visit).test(test).orderedBy(orderedBy).build();
+                .visit(visit).test(test).orderedBy(orderedBy).hospitalId(hospitalId).build();
         return mapOrderToDto(labOrderRepository.save(order));
     }
 
@@ -68,10 +77,18 @@ public class LabService {
     }
 
     public Page<LabOrderDTO> getOrdersByStatus(LabOrderStatus status, Pageable pageable) {
+        Long hospitalId = TenantContext.getCurrentHospitalId();
+        if (hospitalId != null) {
+            return labOrderRepository.findByHospitalIdAndStatus(hospitalId, status, pageable).map(this::mapOrderToDto);
+        }
         return labOrderRepository.findByStatus(status, pageable).map(this::mapOrderToDto);
     }
 
     public Page<LabOrderDTO> searchOrdersByStatus(LabOrderStatus status, String q, Pageable pageable) {
+        Long hospitalId = TenantContext.getCurrentHospitalId();
+        if (hospitalId != null) {
+            return labOrderRepository.findByHospitalIdAndStatusAndPatientSearch(hospitalId, status, q, pageable).map(this::mapOrderToDto);
+        }
         return labOrderRepository.findByStatusAndPatientSearch(status, q, pageable).map(this::mapOrderToDto);
     }
 
@@ -130,6 +147,12 @@ public class LabService {
     }
 
     public long countPendingOrders() {
+        Long hospitalId = TenantContext.getCurrentHospitalId();
+        if (hospitalId != null) {
+            return labOrderRepository.countByHospitalIdAndStatus(hospitalId, LabOrderStatus.ORDERED) +
+                   labOrderRepository.countByHospitalIdAndStatus(hospitalId, LabOrderStatus.SAMPLE_COLLECTED) +
+                   labOrderRepository.countByHospitalIdAndStatus(hospitalId, LabOrderStatus.PROCESSING);
+        }
         return labOrderRepository.countByStatus(LabOrderStatus.ORDERED) +
                labOrderRepository.countByStatus(LabOrderStatus.SAMPLE_COLLECTED) +
                labOrderRepository.countByStatus(LabOrderStatus.PROCESSING);

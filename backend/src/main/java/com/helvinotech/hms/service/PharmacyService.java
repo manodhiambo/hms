@@ -15,6 +15,7 @@ import com.helvinotech.hms.repository.DrugRepository;
 import com.helvinotech.hms.repository.PrescriptionRepository;
 import com.helvinotech.hms.repository.UserRepository;
 import com.helvinotech.hms.repository.VisitRepository;
+import com.helvinotech.hms.tenant.TenantContext;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -41,9 +42,11 @@ public class PharmacyService {
 
     @Transactional(readOnly = false)
     public DrugDTO createDrug(DrugDTO dto) {
+        Long hospitalId = TenantContext.getCurrentHospitalId();
         Drug drug = new Drug();
         mapDtoToEntity(dto, drug);
         drug.setActive(true);
+        drug.setHospitalId(hospitalId);
         return mapDrugToDto(drugRepository.save(drug));
     }
 
@@ -53,10 +56,18 @@ public class PharmacyService {
     }
 
     public Page<DrugDTO> getAllDrugs(Pageable pageable) {
+        Long hospitalId = TenantContext.getCurrentHospitalId();
+        if (hospitalId != null) {
+            return drugRepository.findByHospitalIdAndActiveTrue(hospitalId, pageable).map(this::mapDrugToDto);
+        }
         return drugRepository.findByActiveTrue(pageable).map(this::mapDrugToDto);
     }
 
     public Page<DrugDTO> searchDrugs(String query, Pageable pageable) {
+        Long hospitalId = TenantContext.getCurrentHospitalId();
+        if (hospitalId != null) {
+            return drugRepository.searchDrugs(hospitalId, query, pageable).map(this::mapDrugToDto);
+        }
         return drugRepository.searchDrugs(query, pageable).map(this::mapDrugToDto);
     }
 
@@ -115,6 +126,7 @@ public class PharmacyService {
         if (prescriptionRepository.existsByVisitIdAndDrugId(dto.getVisitId(), dto.getDrugId())) {
             throw new BadRequestException(drug.getGenericName() + " has already been prescribed for this visit");
         }
+        Long hospitalId = TenantContext.getCurrentHospitalId();
         Prescription rx = Prescription.builder()
                 .visit(visit)
                 .drug(drug)
@@ -123,6 +135,7 @@ public class PharmacyService {
                 .duration(dto.getDuration())
                 .quantityPrescribed(dto.getQuantityPrescribed())
                 .instructions(dto.getInstructions())
+                .hospitalId(hospitalId)
                 .build();
         return mapPrescriptionToDto(prescriptionRepository.save(rx));
     }
@@ -138,6 +151,11 @@ public class PharmacyService {
     }
 
     public List<PrescriptionDTO> getPendingPrescriptions() {
+        Long hospitalId = TenantContext.getCurrentHospitalId();
+        if (hospitalId != null) {
+            return prescriptionRepository.findByHospitalIdAndDispensedFalse(hospitalId)
+                    .stream().map(this::mapPrescriptionToDto).collect(Collectors.toList());
+        }
         return prescriptionRepository.findByDispensedFalse()
                 .stream().map(this::mapPrescriptionToDto).collect(Collectors.toList());
     }
@@ -153,11 +171,21 @@ public class PharmacyService {
     }
 
     public List<DrugDTO> getLowStockDrugs() {
+        Long hospitalId = TenantContext.getCurrentHospitalId();
+        if (hospitalId != null) {
+            return drugRepository.findByHospitalIdAndQuantityInStockLessThanEqual(hospitalId, 10)
+                    .stream().map(this::mapDrugToDto).collect(Collectors.toList());
+        }
         return drugRepository.findByQuantityInStockLessThanEqual(10)
                 .stream().map(this::mapDrugToDto).collect(Collectors.toList());
     }
 
     public List<DrugDTO> getExpiringDrugs() {
+        Long hospitalId = TenantContext.getCurrentHospitalId();
+        if (hospitalId != null) {
+            return drugRepository.findByHospitalIdAndExpiryDateBefore(hospitalId, LocalDate.now().plusMonths(3))
+                    .stream().map(this::mapDrugToDto).collect(Collectors.toList());
+        }
         return drugRepository.findByExpiryDateBefore(LocalDate.now().plusMonths(3))
                 .stream().map(this::mapDrugToDto).collect(Collectors.toList());
     }

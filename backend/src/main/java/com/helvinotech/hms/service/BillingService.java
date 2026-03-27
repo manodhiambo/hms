@@ -5,6 +5,7 @@ import com.helvinotech.hms.entity.*;
 import com.helvinotech.hms.enums.PaymentStatus;
 import com.helvinotech.hms.exception.ResourceNotFoundException;
 import com.helvinotech.hms.repository.*;
+import com.helvinotech.hms.tenant.TenantContext;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -43,6 +44,7 @@ public class BillingService {
 
     @Transactional(readOnly = false)
     public BillingDTO createBilling(BillingDTO dto) {
+        Long hospitalId = TenantContext.getCurrentHospitalId();
         Patient patient = patientRepository.findById(dto.getPatientId())
                 .orElseThrow(() -> new ResourceNotFoundException("Patient", dto.getPatientId()));
         Billing billing = Billing.builder()
@@ -50,6 +52,7 @@ public class BillingService {
                 .patient(patient)
                 .notes(dto.getNotes())
                 .billedDate(dto.getBilledDate())
+                .hospitalId(hospitalId)
                 .build();
         if (dto.getVisitId() != null) {
             Visit visit = visitRepository.findById(dto.getVisitId())
@@ -66,18 +69,34 @@ public class BillingService {
     }
 
     public Page<BillingDTO> getBillingsByPatient(Long patientId, Pageable pageable) {
+        Long hospitalId = TenantContext.getCurrentHospitalId();
+        if (hospitalId != null) {
+            return billingRepository.findByHospitalIdAndPatientIdOrderByCreatedAtDesc(hospitalId, patientId, pageable).map(this::mapToDto);
+        }
         return billingRepository.findByPatientIdOrderByCreatedAtDesc(patientId, pageable).map(this::mapToDto);
     }
 
     public Page<BillingDTO> getBillingsByStatus(PaymentStatus status, Pageable pageable) {
+        Long hospitalId = TenantContext.getCurrentHospitalId();
+        if (hospitalId != null) {
+            return billingRepository.findByHospitalIdAndStatus(hospitalId, status, pageable).map(this::mapToDto);
+        }
         return billingRepository.findByStatus(status, pageable).map(this::mapToDto);
     }
 
     public Page<BillingDTO> getAllBillings(Pageable pageable) {
+        Long hospitalId = TenantContext.getCurrentHospitalId();
+        if (hospitalId != null) {
+            return billingRepository.findByHospitalId(hospitalId, pageable).map(this::mapToDto);
+        }
         return billingRepository.findAll(pageable).map(this::mapToDto);
     }
 
     public Page<BillingDTO> searchBillings(String query, Pageable pageable) {
+        Long hospitalId = TenantContext.getCurrentHospitalId();
+        if (hospitalId != null) {
+            return billingRepository.searchBillings(hospitalId, query, pageable).map(this::mapToDto);
+        }
         return billingRepository.searchBillings(query, pageable).map(this::mapToDto);
     }
 
@@ -276,12 +295,20 @@ public class BillingService {
     }
 
     public BigDecimal getRevenueToday() {
+        Long hospitalId = TenantContext.getCurrentHospitalId();
         LocalDateTime startOfDay = LocalDateTime.now().toLocalDate().atStartOfDay();
+        if (hospitalId != null) {
+            return billingRepository.sumRevenueByDateRange(hospitalId, startOfDay, startOfDay.plusDays(1));
+        }
         return billingRepository.sumRevenueByDateRange(startOfDay, startOfDay.plusDays(1));
     }
 
     public BigDecimal getRevenueThisMonth() {
+        Long hospitalId = TenantContext.getCurrentHospitalId();
         LocalDateTime startOfMonth = LocalDateTime.now().withDayOfMonth(1).toLocalDate().atStartOfDay();
+        if (hospitalId != null) {
+            return billingRepository.sumRevenueByDateRange(hospitalId, startOfMonth, LocalDateTime.now());
+        }
         return billingRepository.sumRevenueByDateRange(startOfMonth, LocalDateTime.now());
     }
 

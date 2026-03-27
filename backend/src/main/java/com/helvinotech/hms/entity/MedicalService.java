@@ -33,6 +33,9 @@ public class MedicalService {
     @Builder.Default
     private boolean active = true;
 
+    @Column(name = "hospital_id")
+    private Long hospitalId;
+
     @CreationTimestamp
     private LocalDateTime createdAt;
 

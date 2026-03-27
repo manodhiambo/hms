@@ -12,7 +12,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Entity
-@Table(name = "patients")
+@Table(name = "patients",
+       uniqueConstraints = @UniqueConstraint(name = "uq_patient_no_hospital",
+               columnNames = {"patient_no", "hospital_id"}))
 @Getter @Setter
 @NoArgsConstructor @AllArgsConstructor
 @Builder
@@ -22,7 +24,7 @@ public class Patient {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false, unique = true)
+    @Column(name = "patient_no", nullable = false)
     private String patientNo;
 
     @Column(nullable = false)
@@ -57,6 +59,9 @@ public class Patient {
     @OneToMany(mappedBy = "patient", cascade = CascadeType.ALL)
     @Builder.Default
     private List<Visit> visits = new ArrayList<>();
+
+    @Column(name = "hospital_id")
+    private Long hospitalId;
 
     @CreationTimestamp
     private LocalDateTime createdAt;

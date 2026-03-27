@@ -83,6 +83,9 @@ public class Visit {
     @Builder.Default
     private boolean completed = false;
 
+    @Column(name = "hospital_id")
+    private Long hospitalId;
+
     @OneToMany(mappedBy = "visit", cascade = CascadeType.ALL)
     @Builder.Default
     private List<Prescription> prescriptions = new ArrayList<>();

@@ -11,7 +11,12 @@ import lombok.*;
 public class HospitalSettings {
 
     @Id
-    private Long id = 1L; // Always a single row
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    /** Links settings to a specific hospital tenant. */
+    @Column(name = "hospital_id", unique = true)
+    private Long hospitalId;
 
     private String name;
     private String tagline;

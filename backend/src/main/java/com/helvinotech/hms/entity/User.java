@@ -54,6 +54,10 @@ public class User implements UserDetails {
     @Builder.Default
     private boolean active = true;
 
+    /** Tenant identifier. Null for SUPER_ADMIN (platform admin with no hospital affiliation). */
+    @Column(name = "hospital_id")
+    private Long hospitalId;
+
     @CreationTimestamp
     private LocalDateTime createdAt;
 
