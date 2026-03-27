@@ -36,7 +36,7 @@ const emptyForm: RegForm = {
 export default function HospitalsPage() {
   const qc = useQueryClient();
   const navigate = useNavigate();
-  const authLogin = useAuthStore((s) => s.login);
+  const impersonateSession = useAuthStore((s) => s.impersonate);
 
   const [search, setSearch] = useState('');
   const [notes, setNotes] = useState('');
@@ -66,7 +66,7 @@ export default function HospitalsPage() {
 
   const impersonateMut = useMutation({
     mutationFn: (id: number) => hospitalApi.impersonate(id).then(r => r.data.data),
-    onSuccess: (authData) => { authLogin(authData); navigate('/dashboard'); },
+    onSuccess: (authData) => { impersonateSession(authData); navigate('/dashboard'); },
   });
 
   const registerMut = useMutation({

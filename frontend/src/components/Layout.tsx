@@ -7,7 +7,7 @@ import { useHospitalStore } from '../store/hospitalStore';
 import {
   LayoutDashboard, Users, CalendarDays, Stethoscope, Pill, FlaskConical, Scan,
   CreditCard, Shield, BedDouble, UserCog, BarChart3, Bell, LogOut, Settings,
-  Heart, ClipboardList, Activity, ChevronRight, X, Menu, TrendingDown, ScrollText, RotateCcw, Tag,
+  Heart, ClipboardList, Activity, ChevronRight, X, Menu, TrendingDown, ScrollText, RotateCcw, Tag, ArrowLeft,
 } from 'lucide-react';
 
 const baseNavItems = [
@@ -52,7 +52,7 @@ function Avatar({ initials, src, size = 'md' }: { initials: string; src?: string
 }
 
 export default function Layout() {
-  const { fullName, role, userId, logout, profilePicture } = useAuthStore();
+  const { fullName, role, userId, logout, profilePicture, isImpersonating, exitImpersonation, hospitalName } = useAuthStore();
   const { setSidebarOpen } = useUIStore();
   const { unreadCount, fetchUnreadCount } = useNotificationStore();
   const { fetchFromServer } = useHospitalStore();
@@ -78,6 +78,7 @@ export default function Layout() {
   }, [location.pathname, setSidebarOpen]);
 
   const handleLogout = () => { logout(); navigate('/login'); };
+  const handleExitImpersonation = () => { exitImpersonation(); navigate('/hospitals'); };
 
   const showQueue  = role === 'DOCTOR' || role === 'NURSE';
   const isHospitalAdmin = role === 'HOSPITAL_ADMIN';
@@ -94,7 +95,25 @@ export default function Layout() {
     location.pathname === path || location.pathname.startsWith(path + '/');
 
   return (
-    <div className="flex h-screen bg-fb-bg overflow-hidden">
+    <div className="flex flex-col h-screen bg-fb-bg overflow-hidden">
+
+      {/* ── Impersonation banner ── */}
+      {isImpersonating && (
+        <div className="flex-shrink-0 bg-amber-500 text-white flex items-center justify-between px-4 py-2 text-sm z-50">
+          <div className="flex items-center gap-2">
+            <span className="font-semibold">Impersonating:</span>
+            <span>{hospitalName || 'Hospital'}</span>
+          </div>
+          <button
+            onClick={handleExitImpersonation}
+            className="flex items-center gap-1.5 bg-white/20 hover:bg-white/30 px-3 py-1 rounded-lg font-semibold transition-colors"
+          >
+            <ArrowLeft className="w-3.5 h-3.5" /> Return to Admin
+          </button>
+        </div>
+      )}
+
+      <div className="flex flex-1 overflow-hidden">
 
       {/* ══════════════════════════════════════
           DESKTOP SIDEBAR
@@ -327,6 +346,7 @@ export default function Layout() {
           </div>
         </>
       )}
+      </div>
     </div>
   );
 }
