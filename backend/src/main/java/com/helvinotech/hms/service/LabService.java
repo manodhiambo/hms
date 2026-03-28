@@ -80,7 +80,6 @@ public class LabService {
         User orderedBy = userRepository.findById(orderedById)
                 .orElseThrow(() -> new ResourceNotFoundException("User", orderedById));
 
-        Long hospitalId = TenantContext.getCurrentHospitalId();
         LabOrder order = LabOrder.builder()
                 .visit(visit).test(test).orderedBy(orderedBy).hospitalId(hospitalId).build();
         return mapOrderToDto(labOrderRepository.save(order));
