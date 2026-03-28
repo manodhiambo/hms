@@ -53,6 +53,11 @@ public class AppointmentService {
     }
 
     public AppointmentDTO getAppointment(Long id) {
+        Long hospitalId = TenantContext.getCurrentHospitalId();
+        if (hospitalId != null) {
+            return mapToDto(appointmentRepository.findByIdAndHospitalId(id, hospitalId)
+                    .orElseThrow(() -> new ResourceNotFoundException("Appointment", id)));
+        }
         return mapToDto(appointmentRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Appointment", id)));
     }
@@ -85,8 +90,15 @@ public class AppointmentService {
 
     @Transactional(readOnly = false)
     public AppointmentDTO updateStatus(Long id, AppointmentStatus status) {
-        Appointment apt = appointmentRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Appointment", id));
+        Long hospitalId = TenantContext.getCurrentHospitalId();
+        Appointment apt;
+        if (hospitalId != null) {
+            apt = appointmentRepository.findByIdAndHospitalId(id, hospitalId)
+                    .orElseThrow(() -> new ResourceNotFoundException("Appointment", id));
+        } else {
+            apt = appointmentRepository.findById(id)
+                    .orElseThrow(() -> new ResourceNotFoundException("Appointment", id));
+        }
         apt.setStatus(status);
         return mapToDto(appointmentRepository.save(apt));
     }

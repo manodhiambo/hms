@@ -17,6 +17,7 @@ import java.util.Optional;
 @Repository
 public interface BillingRepository extends JpaRepository<Billing, Long> {
     // Tenant-scoped
+    java.util.Optional<Billing> findByIdAndHospitalId(Long id, Long hospitalId);
     Page<Billing> findByHospitalIdAndPatientIdOrderByCreatedAtDesc(Long hospitalId, Long patientId, Pageable pageable);
     List<Billing> findByHospitalIdAndPatientId(Long hospitalId, Long patientId);
     Page<Billing> findByHospitalIdAndStatus(Long hospitalId, PaymentStatus status, Pageable pageable);

@@ -32,8 +32,14 @@ public class ImagingService {
     @Transactional(readOnly = false)
     public ImagingOrderDTO createOrder(ImagingOrderDTO dto) {
         Long hospitalId = TenantContext.getCurrentHospitalId();
-        Visit visit = visitRepository.findById(dto.getVisitId())
-                .orElseThrow(() -> new ResourceNotFoundException("Visit", dto.getVisitId()));
+        Visit visit;
+        if (hospitalId != null) {
+            visit = visitRepository.findByIdAndHospitalId(dto.getVisitId(), hospitalId)
+                    .orElseThrow(() -> new ResourceNotFoundException("Visit", dto.getVisitId()));
+        } else {
+            visit = visitRepository.findById(dto.getVisitId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Visit", dto.getVisitId()));
+        }
         ImagingOrder order = ImagingOrder.builder()
                 .visit(visit)
                 .imagingType(dto.getImagingType())
@@ -59,8 +65,15 @@ public class ImagingService {
 
     @Transactional(readOnly = false)
     public ImagingOrderDTO completeOrder(Long id, String findings, String impression, Long radiologistId) {
-        ImagingOrder order = imagingOrderRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Imaging Order", id));
+        Long hospitalId = TenantContext.getCurrentHospitalId();
+        ImagingOrder order;
+        if (hospitalId != null) {
+            order = imagingOrderRepository.findByIdAndHospitalId(id, hospitalId)
+                    .orElseThrow(() -> new ResourceNotFoundException("Imaging Order", id));
+        } else {
+            order = imagingOrderRepository.findById(id)
+                    .orElseThrow(() -> new ResourceNotFoundException("Imaging Order", id));
+        }
         User radiologist = userRepository.findById(radiologistId)
                 .orElseThrow(() -> new ResourceNotFoundException("User", radiologistId));
         order.setFindings(findings);

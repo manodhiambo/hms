@@ -64,6 +64,25 @@ public class UserController {
         return ResponseEntity.ok(ApiResponse.success("Password reset successfully", null));
     }
 
+    /**
+     * SUPER_ADMIN changes their own password with advanced validation:
+     * current password check, strength rules, history enforcement (last 5).
+     */
+    @PreAuthorize("hasRole('SUPER_ADMIN')")
+    @PutMapping("/{id}/change-superadmin-password")
+    public ResponseEntity<ApiResponse<Void>> changeSuperAdminPassword(
+            @PathVariable Long id,
+            @RequestBody Map<String, String> body) {
+        userService.changeSuperAdminPassword(
+                id,
+                body.get("currentPassword"),
+                body.get("newPassword"),
+                body.get("confirmPassword")
+        );
+        activityLogService.logCurrentUser("CHANGE_PASSWORD", "User", id, "Super admin changed their password");
+        return ResponseEntity.ok(ApiResponse.success("Password changed successfully", null));
+    }
+
     @PreAuthorize("hasRole('SUPER_ADMIN')")
     @DeleteMapping("/{id}")
     public ResponseEntity<ApiResponse<Void>> delete(@PathVariable Long id) {

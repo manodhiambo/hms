@@ -8,6 +8,7 @@ import java.util.List;
 
 @Repository
 public interface WardRepository extends JpaRepository<Ward, Long> {
+    java.util.Optional<Ward> findByIdAndHospitalId(Long id, Long hospitalId);
     List<Ward> findByHospitalIdAndActiveTrue(Long hospitalId);
     List<Ward> findByHospitalId(Long hospitalId);
 

@@ -16,6 +16,7 @@ import java.util.List;
 @Repository
 public interface AdmissionRepository extends JpaRepository<Admission, Long> {
     // Tenant-scoped
+    java.util.Optional<Admission> findByIdAndHospitalId(Long id, Long hospitalId);
     Page<Admission> findByHospitalIdAndStatus(Long hospitalId, AdmissionStatus status, Pageable pageable);
     List<Admission> findByHospitalIdAndPatientId(Long hospitalId, Long patientId);
     long countByHospitalIdAndStatus(Long hospitalId, AdmissionStatus status);

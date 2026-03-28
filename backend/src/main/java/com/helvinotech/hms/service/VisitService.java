@@ -30,8 +30,14 @@ public class VisitService {
     @Transactional(readOnly = false)
     public VisitDTO createVisit(VisitDTO dto) {
         Long hospitalId = TenantContext.getCurrentHospitalId();
-        Patient patient = patientRepository.findById(dto.getPatientId())
-                .orElseThrow(() -> new ResourceNotFoundException("Patient", dto.getPatientId()));
+        Patient patient;
+        if (hospitalId != null) {
+            patient = patientRepository.findByIdAndHospitalId(dto.getPatientId(), hospitalId)
+                    .orElseThrow(() -> new ResourceNotFoundException("Patient", dto.getPatientId()));
+        } else {
+            patient = patientRepository.findById(dto.getPatientId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Patient", dto.getPatientId()));
+        }
         Visit visit = new Visit();
         visit.setPatient(patient);
         visit.setVisitType(dto.getVisitType());
@@ -47,12 +53,23 @@ public class VisitService {
     }
 
     public VisitDTO getVisit(Long id) {
-        Visit visit = visitRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Visit", id));
+        Long hospitalId = TenantContext.getCurrentHospitalId();
+        Visit visit;
+        if (hospitalId != null) {
+            visit = visitRepository.findByIdAndHospitalId(id, hospitalId)
+                    .orElseThrow(() -> new ResourceNotFoundException("Visit", id));
+        } else {
+            visit = visitRepository.findById(id)
+                    .orElseThrow(() -> new ResourceNotFoundException("Visit", id));
+        }
         return mapToDto(visit);
     }
 
     public Page<VisitDTO> getVisitsByPatient(Long patientId, Pageable pageable) {
+        Long hospitalId = TenantContext.getCurrentHospitalId();
+        if (hospitalId != null) {
+            return visitRepository.findByPatientIdAndHospitalIdOrderByCreatedAtDesc(patientId, hospitalId, pageable).map(this::mapToDto);
+        }
         return visitRepository.findByPatientIdOrderByCreatedAtDesc(patientId, pageable).map(this::mapToDto);
     }
 
@@ -68,8 +85,15 @@ public class VisitService {
 
     @Transactional(readOnly = false)
     public VisitDTO updateVisit(Long id, VisitDTO dto) {
-        Visit visit = visitRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Visit", id));
+        Long hospitalId = TenantContext.getCurrentHospitalId();
+        Visit visit;
+        if (hospitalId != null) {
+            visit = visitRepository.findByIdAndHospitalId(id, hospitalId)
+                    .orElseThrow(() -> new ResourceNotFoundException("Visit", id));
+        } else {
+            visit = visitRepository.findById(id)
+                    .orElseThrow(() -> new ResourceNotFoundException("Visit", id));
+        }
         if (dto.getDoctorId() != null) {
             User doctor = userRepository.findById(dto.getDoctorId())
                     .orElseThrow(() -> new ResourceNotFoundException("Doctor", dto.getDoctorId()));
@@ -95,8 +119,15 @@ public class VisitService {
 
     @Transactional(readOnly = false)
     public VisitDTO completeVisit(Long id) {
-        Visit visit = visitRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Visit", id));
+        Long hospitalId = TenantContext.getCurrentHospitalId();
+        Visit visit;
+        if (hospitalId != null) {
+            visit = visitRepository.findByIdAndHospitalId(id, hospitalId)
+                    .orElseThrow(() -> new ResourceNotFoundException("Visit", id));
+        } else {
+            visit = visitRepository.findById(id)
+                    .orElseThrow(() -> new ResourceNotFoundException("Visit", id));
+        }
         visit.setCompleted(true);
         visit.setTriageStatus(TriageStatus.COMPLETED);
         visit = visitRepository.save(visit);
@@ -105,8 +136,15 @@ public class VisitService {
 
     @Transactional(readOnly = false)
     public VisitDTO updateTriage(Long id, VisitDTO dto) {
-        Visit visit = visitRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Visit", id));
+        Long hospitalId = TenantContext.getCurrentHospitalId();
+        Visit visit;
+        if (hospitalId != null) {
+            visit = visitRepository.findByIdAndHospitalId(id, hospitalId)
+                    .orElseThrow(() -> new ResourceNotFoundException("Visit", id));
+        } else {
+            visit = visitRepository.findById(id)
+                    .orElseThrow(() -> new ResourceNotFoundException("Visit", id));
+        }
         if (dto.getTriagePriority() != null) {
             visit.setTriagePriority(dto.getTriagePriority());
         }

@@ -50,8 +50,15 @@ public class LabService {
 
     @Transactional(readOnly = false)
     public LabTestDTO updateTest(Long id, LabTestDTO dto) {
-        LabTest test = labTestRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Lab Test", id));
+        Long hospitalId = TenantContext.getCurrentHospitalId();
+        LabTest test;
+        if (hospitalId != null) {
+            test = labTestRepository.findByIdAndHospitalId(id, hospitalId)
+                    .orElseThrow(() -> new ResourceNotFoundException("Lab Test", id));
+        } else {
+            test = labTestRepository.findById(id)
+                    .orElseThrow(() -> new ResourceNotFoundException("Lab Test", id));
+        }
         mapTestDtoToEntity(dto, test);
         return mapTestToDto(labTestRepository.save(test));
     }
@@ -59,8 +66,15 @@ public class LabService {
     // Lab Orders
     @Transactional(readOnly = false)
     public LabOrderDTO createOrder(Long visitId, Long testId, Long orderedById) {
-        Visit visit = visitRepository.findById(visitId)
-                .orElseThrow(() -> new ResourceNotFoundException("Visit", visitId));
+        Long hospitalId = TenantContext.getCurrentHospitalId();
+        Visit visit;
+        if (hospitalId != null) {
+            visit = visitRepository.findByIdAndHospitalId(visitId, hospitalId)
+                    .orElseThrow(() -> new ResourceNotFoundException("Visit", visitId));
+        } else {
+            visit = visitRepository.findById(visitId)
+                    .orElseThrow(() -> new ResourceNotFoundException("Visit", visitId));
+        }
         LabTest test = labTestRepository.findById(testId)
                 .orElseThrow(() -> new ResourceNotFoundException("Lab Test", testId));
         User orderedBy = userRepository.findById(orderedById)
@@ -94,8 +108,15 @@ public class LabService {
 
     @Transactional(readOnly = false)
     public LabOrderDTO collectSample(Long orderId) {
-        LabOrder order = labOrderRepository.findById(orderId)
-                .orElseThrow(() -> new ResourceNotFoundException("Lab Order", orderId));
+        Long hospitalId = TenantContext.getCurrentHospitalId();
+        LabOrder order;
+        if (hospitalId != null) {
+            order = labOrderRepository.findByIdAndHospitalId(orderId, hospitalId)
+                    .orElseThrow(() -> new ResourceNotFoundException("Lab Order", orderId));
+        } else {
+            order = labOrderRepository.findById(orderId)
+                    .orElseThrow(() -> new ResourceNotFoundException("Lab Order", orderId));
+        }
         order.setStatus(LabOrderStatus.SAMPLE_COLLECTED);
         order.setSampleCollectedAt(LocalDateTime.now());
         return mapOrderToDto(labOrderRepository.save(order));
@@ -103,8 +124,15 @@ public class LabService {
 
     @Transactional(readOnly = false)
     public LabOrderDTO processResult(Long orderId, String result, boolean abnormal, String remarks, Long processedById) {
-        LabOrder order = labOrderRepository.findById(orderId)
-                .orElseThrow(() -> new ResourceNotFoundException("Lab Order", orderId));
+        Long hospitalId = TenantContext.getCurrentHospitalId();
+        LabOrder order;
+        if (hospitalId != null) {
+            order = labOrderRepository.findByIdAndHospitalId(orderId, hospitalId)
+                    .orElseThrow(() -> new ResourceNotFoundException("Lab Order", orderId));
+        } else {
+            order = labOrderRepository.findById(orderId)
+                    .orElseThrow(() -> new ResourceNotFoundException("Lab Order", orderId));
+        }
         User processedBy = userRepository.findById(processedById)
                 .orElseThrow(() -> new ResourceNotFoundException("User", processedById));
         order.setResult(result);
@@ -118,8 +146,15 @@ public class LabService {
 
     @Transactional(readOnly = false)
     public LabOrderDTO verifyResult(Long orderId, Long verifiedById) {
-        LabOrder order = labOrderRepository.findById(orderId)
-                .orElseThrow(() -> new ResourceNotFoundException("Lab Order", orderId));
+        Long hospitalId = TenantContext.getCurrentHospitalId();
+        LabOrder order;
+        if (hospitalId != null) {
+            order = labOrderRepository.findByIdAndHospitalId(orderId, hospitalId)
+                    .orElseThrow(() -> new ResourceNotFoundException("Lab Order", orderId));
+        } else {
+            order = labOrderRepository.findById(orderId)
+                    .orElseThrow(() -> new ResourceNotFoundException("Lab Order", orderId));
+        }
         User verifiedBy = userRepository.findById(verifiedById)
                 .orElseThrow(() -> new ResourceNotFoundException("User", verifiedById));
         order.setVerifiedBy(verifiedBy);
@@ -130,8 +165,15 @@ public class LabService {
 
     @Transactional(readOnly = false)
     public LabOrderDTO releaseResult(Long orderId) {
-        LabOrder order = labOrderRepository.findById(orderId)
-                .orElseThrow(() -> new ResourceNotFoundException("Lab Order", orderId));
+        Long hospitalId = TenantContext.getCurrentHospitalId();
+        LabOrder order;
+        if (hospitalId != null) {
+            order = labOrderRepository.findByIdAndHospitalId(orderId, hospitalId)
+                    .orElseThrow(() -> new ResourceNotFoundException("Lab Order", orderId));
+        } else {
+            order = labOrderRepository.findById(orderId)
+                    .orElseThrow(() -> new ResourceNotFoundException("Lab Order", orderId));
+        }
         order.setReleasedAt(LocalDateTime.now());
         order.setStatus(LabOrderStatus.RELEASED);
         LabOrder saved = labOrderRepository.save(order);

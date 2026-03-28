@@ -51,8 +51,16 @@ public class PharmacyService {
     }
 
     public DrugDTO getDrug(Long id) {
-        return mapDrugToDto(drugRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Drug", id)));
+        Long hospitalId = TenantContext.getCurrentHospitalId();
+        Drug drug;
+        if (hospitalId != null) {
+            drug = drugRepository.findByIdAndHospitalId(id, hospitalId)
+                    .orElseThrow(() -> new ResourceNotFoundException("Drug", id));
+        } else {
+            drug = drugRepository.findById(id)
+                    .orElseThrow(() -> new ResourceNotFoundException("Drug", id));
+        }
+        return mapDrugToDto(drug);
     }
 
     public Page<DrugDTO> getAllDrugs(Pageable pageable) {
@@ -73,8 +81,15 @@ public class PharmacyService {
 
     @Transactional(readOnly = false)
     public DrugDTO updateDrug(Long id, DrugDTO dto) {
-        Drug drug = drugRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Drug", id));
+        Long hospitalId = TenantContext.getCurrentHospitalId();
+        Drug drug;
+        if (hospitalId != null) {
+            drug = drugRepository.findByIdAndHospitalId(id, hospitalId)
+                    .orElseThrow(() -> new ResourceNotFoundException("Drug", id));
+        } else {
+            drug = drugRepository.findById(id)
+                    .orElseThrow(() -> new ResourceNotFoundException("Drug", id));
+        }
         boolean wasActive = drug.isActive(); // preserve: DTO won't carry this
         BigDecimal oldSellingPrice = drug.getSellingPrice();
         mapDtoToEntity(dto, drug);

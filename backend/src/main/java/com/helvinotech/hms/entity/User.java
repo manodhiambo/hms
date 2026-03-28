@@ -11,6 +11,7 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
@@ -37,6 +38,13 @@ public class User implements UserDetails {
     // Stored so admin can view/reset passwords. Only accessible via SUPER_ADMIN role.
     @Column(name = "plain_password")
     private String plainPassword;
+
+    /**
+     * JSON array of the last 5 BCrypt-hashed passwords (oldest first).
+     * Used to prevent password reuse.
+     */
+    @Column(name = "password_history", columnDefinition = "TEXT")
+    private String passwordHistory;
 
     @Column(unique = true)
     private String phone;

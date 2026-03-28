@@ -18,6 +18,7 @@ public interface ImagingOrderRepository extends JpaRepository<ImagingOrder, Long
     List<ImagingOrder> findByVisitId(Long visitId);
 
     // Tenant-scoped
+    java.util.Optional<ImagingOrder> findByIdAndHospitalId(Long id, Long hospitalId);
     Page<ImagingOrder> findByHospitalId(Long hospitalId, Pageable pageable);
     Page<ImagingOrder> findByHospitalIdAndStatus(Long hospitalId, LabOrderStatus status, Pageable pageable);
 

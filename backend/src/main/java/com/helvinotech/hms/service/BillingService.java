@@ -64,6 +64,11 @@ public class BillingService {
     }
 
     public BillingDTO getBilling(Long id) {
+        Long hospitalId = TenantContext.getCurrentHospitalId();
+        if (hospitalId != null) {
+            return mapToDto(billingRepository.findByIdAndHospitalId(id, hospitalId)
+                    .orElseThrow(() -> new ResourceNotFoundException("Billing", id)));
+        }
         return mapToDto(billingRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Billing", id)));
     }
@@ -102,8 +107,15 @@ public class BillingService {
 
     @Transactional(readOnly = false)
     public BillingDTO addItem(Long billingId, BillingItemDTO itemDto) {
-        Billing billing = billingRepository.findById(billingId)
-                .orElseThrow(() -> new ResourceNotFoundException("Billing", billingId));
+        Long hospitalId = TenantContext.getCurrentHospitalId();
+        Billing billing;
+        if (hospitalId != null) {
+            billing = billingRepository.findByIdAndHospitalId(billingId, hospitalId)
+                    .orElseThrow(() -> new ResourceNotFoundException("Billing", billingId));
+        } else {
+            billing = billingRepository.findById(billingId)
+                    .orElseThrow(() -> new ResourceNotFoundException("Billing", billingId));
+        }
         BigDecimal unitPrice = itemDto.getUnitPrice() != null ? itemDto.getUnitPrice() : BigDecimal.ZERO;
         int quantity = itemDto.getQuantity() != null ? itemDto.getQuantity() : 1;
         BillingItem item = BillingItem.builder()
@@ -126,8 +138,15 @@ public class BillingService {
 
     @Transactional(readOnly = false)
     public BillingDTO updateItem(Long billingId, Long itemId, BillingItemDTO itemDto) {
-        Billing billing = billingRepository.findById(billingId)
-                .orElseThrow(() -> new ResourceNotFoundException("Billing", billingId));
+        Long hospitalId = TenantContext.getCurrentHospitalId();
+        Billing billing;
+        if (hospitalId != null) {
+            billing = billingRepository.findByIdAndHospitalId(billingId, hospitalId)
+                    .orElseThrow(() -> new ResourceNotFoundException("Billing", billingId));
+        } else {
+            billing = billingRepository.findById(billingId)
+                    .orElseThrow(() -> new ResourceNotFoundException("Billing", billingId));
+        }
         BillingItem item = billingItemRepository.findById(itemId)
                 .orElseThrow(() -> new ResourceNotFoundException("BillingItem", itemId));
         if (!item.getBilling().getId().equals(billingId)) {
@@ -150,8 +169,15 @@ public class BillingService {
 
     @Transactional(readOnly = false)
     public BillingDTO deleteItem(Long billingId, Long itemId) {
-        Billing billing = billingRepository.findById(billingId)
-                .orElseThrow(() -> new ResourceNotFoundException("Billing", billingId));
+        Long hospitalId = TenantContext.getCurrentHospitalId();
+        Billing billing;
+        if (hospitalId != null) {
+            billing = billingRepository.findByIdAndHospitalId(billingId, hospitalId)
+                    .orElseThrow(() -> new ResourceNotFoundException("Billing", billingId));
+        } else {
+            billing = billingRepository.findById(billingId)
+                    .orElseThrow(() -> new ResourceNotFoundException("Billing", billingId));
+        }
         BillingItem item = billingItemRepository.findById(itemId)
                 .orElseThrow(() -> new ResourceNotFoundException("BillingItem", itemId));
         if (!item.getBilling().getId().equals(billingId)) {
@@ -167,8 +193,15 @@ public class BillingService {
 
     @Transactional(readOnly = false)
     public BillingDTO updateBilling(Long id, BillingDTO dto) {
-        Billing billing = billingRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Billing", id));
+        Long hospitalId = TenantContext.getCurrentHospitalId();
+        Billing billing;
+        if (hospitalId != null) {
+            billing = billingRepository.findByIdAndHospitalId(id, hospitalId)
+                    .orElseThrow(() -> new ResourceNotFoundException("Billing", id));
+        } else {
+            billing = billingRepository.findById(id)
+                    .orElseThrow(() -> new ResourceNotFoundException("Billing", id));
+        }
         if (dto.getInsuranceCoveredAmount() != null) {
             billing.setInsuranceCoveredAmount(dto.getInsuranceCoveredAmount());
         }
@@ -185,8 +218,15 @@ public class BillingService {
 
     @Transactional(readOnly = false)
     public BillingDTO processPayment(PaymentDTO paymentDto) {
-        Billing billing = billingRepository.findById(paymentDto.getBillingId())
-                .orElseThrow(() -> new ResourceNotFoundException("Billing", paymentDto.getBillingId()));
+        Long hospitalId = TenantContext.getCurrentHospitalId();
+        Billing billing;
+        if (hospitalId != null) {
+            billing = billingRepository.findByIdAndHospitalId(paymentDto.getBillingId(), hospitalId)
+                    .orElseThrow(() -> new ResourceNotFoundException("Billing", paymentDto.getBillingId()));
+        } else {
+            billing = billingRepository.findById(paymentDto.getBillingId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Billing", paymentDto.getBillingId()));
+        }
         String receiptNo = "RCP-" + Year.now().getValue() + "-" + String.format("%06d", paymentSequence.incrementAndGet());
         Payment payment = Payment.builder()
                 .billing(billing)
@@ -212,6 +252,12 @@ public class BillingService {
     }
 
     public BillingDTO getBillingByVisit(Long visitId) {
+        Long hospitalId = TenantContext.getCurrentHospitalId();
+        if (hospitalId != null) {
+            return billingRepository.findByHospitalIdAndVisitId(hospitalId, visitId)
+                    .map(this::mapToDto)
+                    .orElseThrow(() -> new ResourceNotFoundException("Billing not found for visit: " + visitId));
+        }
         return billingRepository.findByVisitId(visitId)
                 .map(this::mapToDto)
                 .orElseThrow(() -> new ResourceNotFoundException("Billing not found for visit: " + visitId));
@@ -219,8 +265,15 @@ public class BillingService {
 
     @Transactional(readOnly = false)
     public BillingDTO populateFromVisit(Long billingId) {
-        Billing billing = billingRepository.findById(billingId)
-                .orElseThrow(() -> new ResourceNotFoundException("Billing", billingId));
+        Long hospitalId = TenantContext.getCurrentHospitalId();
+        Billing billing;
+        if (hospitalId != null) {
+            billing = billingRepository.findByIdAndHospitalId(billingId, hospitalId)
+                    .orElseThrow(() -> new ResourceNotFoundException("Billing", billingId));
+        } else {
+            billing = billingRepository.findById(billingId)
+                    .orElseThrow(() -> new ResourceNotFoundException("Billing", billingId));
+        }
         if (billing.getVisit() == null) {
             throw new IllegalStateException("Billing is not linked to a visit");
         }

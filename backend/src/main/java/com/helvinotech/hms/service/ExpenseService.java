@@ -67,8 +67,15 @@ public class ExpenseService {
 
     @Transactional(readOnly = false)
     public ExpenseDTO updateExpense(Long id, ExpenseDTO dto) {
-        Expense expense = expenseRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Expense", id));
+        Long hospitalId = TenantContext.getCurrentHospitalId();
+        Expense expense;
+        if (hospitalId != null) {
+            expense = expenseRepository.findByIdAndHospitalId(id, hospitalId)
+                    .orElseThrow(() -> new ResourceNotFoundException("Expense", id));
+        } else {
+            expense = expenseRepository.findById(id)
+                    .orElseThrow(() -> new ResourceNotFoundException("Expense", id));
+        }
         expense.setCategory(dto.getCategory());
         expense.setDescription(dto.getDescription());
         expense.setAmount(dto.getAmount());

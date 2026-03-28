@@ -19,8 +19,12 @@ import java.util.List;
 public interface VisitRepository extends JpaRepository<Visit, Long> {
     // Patient-scoped
     Page<Visit> findByPatientIdOrderByCreatedAtDesc(Long patientId, Pageable pageable);
+    Page<Visit> findByPatientIdAndHospitalIdOrderByCreatedAtDesc(Long patientId, Long hospitalId, Pageable pageable);
     List<Visit> findByPatientId(Long patientId);
     void deleteByPatientId(Long patientId);
+
+    // Single-record tenant-scoped lookup
+    java.util.Optional<Visit> findByIdAndHospitalId(Long id, Long hospitalId);
 
     // Tenant-scoped queries
     List<Visit> findByDoctorIdAndHospitalIdAndCompletedFalseOrderByCreatedAtAsc(Long doctorId, Long hospitalId);

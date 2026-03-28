@@ -13,6 +13,7 @@ import java.util.List;
 @Repository
 public interface AppointmentRepository extends JpaRepository<Appointment, Long> {
     // Tenant-scoped
+    java.util.Optional<Appointment> findByIdAndHospitalId(Long id, Long hospitalId);
     List<Appointment> findByDoctorIdAndHospitalIdAndAppointmentDate(Long doctorId, Long hospitalId, LocalDate date);
     Page<Appointment> findByPatientIdAndHospitalIdOrderByAppointmentDateDesc(Long patientId, Long hospitalId, Pageable pageable);
     List<Appointment> findByHospitalIdAndAppointmentDateAndStatus(Long hospitalId, LocalDate date, AppointmentStatus status);

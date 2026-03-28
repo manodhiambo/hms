@@ -15,6 +15,7 @@ import java.time.LocalDate;
 @Repository
 public interface ExpenseRepository extends JpaRepository<Expense, Long> {
     // Tenant-scoped
+    java.util.Optional<Expense> findByIdAndHospitalId(Long id, Long hospitalId);
     Page<Expense> findByHospitalId(Long hospitalId, Pageable pageable);
     Page<Expense> findByHospitalIdAndExpenseDateBetween(Long hospitalId, LocalDate start, LocalDate end, Pageable pageable);
 

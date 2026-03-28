@@ -52,7 +52,15 @@ public class WardService {
 
     @Transactional(readOnly = false)
     public WardDTO updateWard(Long id, WardDTO dto) {
-        Ward ward = wardRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Ward", id));
+        Long hospitalId = TenantContext.getCurrentHospitalId();
+        Ward ward;
+        if (hospitalId != null) {
+            ward = wardRepository.findByIdAndHospitalId(id, hospitalId)
+                    .orElseThrow(() -> new ResourceNotFoundException("Ward", id));
+        } else {
+            ward = wardRepository.findById(id)
+                    .orElseThrow(() -> new ResourceNotFoundException("Ward", id));
+        }
         ward.setName(dto.getName());
         ward.setType(dto.getType());
         ward.setTotalBeds(dto.getTotalBeds());
@@ -92,8 +100,14 @@ public class WardService {
     @Transactional(readOnly = false)
     public AdmissionDTO admitPatient(AdmissionDTO dto) {
         Long hospitalId = TenantContext.getCurrentHospitalId();
-        Patient patient = patientRepository.findById(dto.getPatientId())
-                .orElseThrow(() -> new ResourceNotFoundException("Patient", dto.getPatientId()));
+        Patient patient;
+        if (hospitalId != null) {
+            patient = patientRepository.findByIdAndHospitalId(dto.getPatientId(), hospitalId)
+                    .orElseThrow(() -> new ResourceNotFoundException("Patient", dto.getPatientId()));
+        } else {
+            patient = patientRepository.findById(dto.getPatientId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Patient", dto.getPatientId()));
+        }
         Bed bed = bedRepository.findById(dto.getBedId())
                 .orElseThrow(() -> new ResourceNotFoundException("Bed", dto.getBedId()));
         if (bed.getStatus() != BedStatus.AVAILABLE) throw new BadRequestException("Bed is not available");
@@ -115,8 +129,15 @@ public class WardService {
 
     @Transactional(readOnly = false)
     public AdmissionDTO dischargePatient(Long admissionId, String dischargeSummary) {
-        Admission admission = admissionRepository.findById(admissionId)
-                .orElseThrow(() -> new ResourceNotFoundException("Admission", admissionId));
+        Long hospitalId = TenantContext.getCurrentHospitalId();
+        Admission admission;
+        if (hospitalId != null) {
+            admission = admissionRepository.findByIdAndHospitalId(admissionId, hospitalId)
+                    .orElseThrow(() -> new ResourceNotFoundException("Admission", admissionId));
+        } else {
+            admission = admissionRepository.findById(admissionId)
+                    .orElseThrow(() -> new ResourceNotFoundException("Admission", admissionId));
+        }
         admission.setStatus(AdmissionStatus.DISCHARGED);
         admission.setDischargeSummary(dischargeSummary);
         admission.setDischargedAt(LocalDateTime.now());

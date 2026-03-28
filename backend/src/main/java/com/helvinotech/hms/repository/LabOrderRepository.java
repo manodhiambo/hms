@@ -18,6 +18,7 @@ public interface LabOrderRepository extends JpaRepository<LabOrder, Long> {
     List<LabOrder> findByVisitId(Long visitId);
 
     // Tenant-scoped
+    java.util.Optional<LabOrder> findByIdAndHospitalId(Long id, Long hospitalId);
     Page<LabOrder> findByHospitalIdAndStatus(Long hospitalId, LabOrderStatus status, Pageable pageable);
     long countByHospitalIdAndStatus(Long hospitalId, LabOrderStatus status);
 

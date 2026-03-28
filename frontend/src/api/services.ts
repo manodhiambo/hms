@@ -188,6 +188,8 @@ export const userApi = {
     api.put<ApiResponse<void>>(`/users/${id}/password`, { currentPassword, newPassword }),
   adminResetPassword: (id: number, newPassword: string) =>
     api.put<ApiResponse<void>>(`/users/${id}/admin-reset-password`, { newPassword }),
+  changeSuperAdminPassword: (id: number, currentPassword: string, newPassword: string, confirmPassword: string) =>
+    api.put<ApiResponse<void>>(`/users/${id}/change-superadmin-password`, { currentPassword, newPassword, confirmPassword }),
 };
 
 // Dashboard

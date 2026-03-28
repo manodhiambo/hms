@@ -14,6 +14,7 @@ import java.util.List;
 @Repository
 public interface DrugRepository extends JpaRepository<Drug, Long> {
     // Tenant-scoped
+    java.util.Optional<Drug> findByIdAndHospitalId(Long id, Long hospitalId);
     Page<Drug> findByHospitalIdAndGenericNameContainingIgnoreCase(Long hospitalId, String name, Pageable pageable);
     List<Drug> findByHospitalIdAndQuantityInStockLessThanEqual(Long hospitalId, Integer threshold);
     List<Drug> findByHospitalIdAndExpiryDateBefore(Long hospitalId, LocalDate date);

@@ -9,6 +9,7 @@ import java.util.List;
 @Repository
 public interface LabTestRepository extends JpaRepository<LabTest, Long> {
     // Tenant-scoped
+    java.util.Optional<LabTest> findByIdAndHospitalId(Long id, Long hospitalId);
     List<LabTest> findByHospitalIdAndCategory(Long hospitalId, String category);
     List<LabTest> findByHospitalIdAndActiveTrue(Long hospitalId);
 
