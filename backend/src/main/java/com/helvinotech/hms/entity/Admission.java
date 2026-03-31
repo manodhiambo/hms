@@ -42,6 +42,9 @@ public class Admission {
     private String admissionReason;
 
     @Column(columnDefinition = "TEXT")
+    private String admissionNote;
+
+    @Column(columnDefinition = "TEXT")
     private String dischargeSummary;
 
     private LocalDateTime admittedAt;

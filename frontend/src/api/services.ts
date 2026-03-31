@@ -1,5 +1,5 @@
 import api from './client';
-import type { ApiResponse, ActivityLog, Patient, Visit, Appointment, Drug, Prescription, LabTest, LabOrder, ImagingOrder, Billing, BillingItem, Payment, Refund, InsuranceCompany, InsuranceClaim, Ward, Room, Bed, Admission, NursingNote, User, Dashboard, Notification, Expense, PageResponse, AuthResponse, MedicalService, Hospital } from '../types';
+import type { ApiResponse, ActivityLog, Patient, Visit, Appointment, Drug, Prescription, LabTest, LabOrder, ImagingOrder, Billing, BillingItem, Payment, Refund, InsuranceCompany, InsuranceClaim, Ward, Room, Bed, Admission, NursingNote, TreatmentEntry, User, Dashboard, Notification, Expense, PageResponse, AuthResponse, MedicalService, Hospital } from '../types';
 
 // Auth
 export const authApi = {
@@ -174,6 +174,14 @@ export const wardApi = {
     api.post<ApiResponse<NursingNote>>('/wards/nursing-notes', data),
   getNursingNotes: (admissionId: number) =>
     api.get<ApiResponse<NursingNote[]>>(`/wards/admissions/${admissionId}/nursing-notes`),
+  getAdmission: (id: number) =>
+    api.get<ApiResponse<Admission>>(`/wards/admissions/${id}`),
+  updateAdmissionNote: (id: number, admissionNote: string) =>
+    api.put<ApiResponse<Admission>>(`/wards/admissions/${id}/admission-note`, { admissionNote }),
+  addTreatmentEntry: (data: Partial<TreatmentEntry>) =>
+    api.post<ApiResponse<TreatmentEntry>>('/wards/treatment-entries', data),
+  getTreatmentEntries: (admissionId: number) =>
+    api.get<ApiResponse<TreatmentEntry[]>>(`/wards/admissions/${admissionId}/treatment-entries`),
 };
 
 // Users

@@ -387,9 +387,26 @@ export interface Admission {
   admittingDoctorName: string;
   status: AdmissionStatus;
   admissionReason: string;
+  admissionNote: string;
   dischargeSummary: string;
   admittedAt: string;
   dischargedAt: string;
+  createdAt: string;
+}
+
+export interface TreatmentEntry {
+  id: number;
+  admissionId: number;
+  recordedById: number | null;
+  recordedByName: string;
+  treatmentType: string;
+  description: string;
+  dose: string;
+  route: string;
+  frequency: string;
+  scheduledTime: string;
+  administeredAt: string | null;
+  notes: string;
   createdAt: string;
 }
 

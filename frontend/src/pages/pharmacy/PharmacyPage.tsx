@@ -80,6 +80,7 @@ export default function PharmacyPage() {
     visitId: '', dosage: '', frequency: '', duration: '', quantityPrescribed: 1, instructions: '',
   });
   const [prescribing, setPrescribing] = useState(false);
+  const [prescribeError, setPrescribeError] = useState<string | null>(null);
 
   const fetchDrugs = useCallback(async () => {
     setLoading(true);
@@ -205,6 +206,7 @@ export default function PharmacyPage() {
     setPatientResults([]);
     setPatientVisits([]);
     setRxForm({ visitId: '', dosage: '', frequency: '', duration: '', quantityPrescribed: 1, instructions: '' });
+    setPrescribeError(null);
     setPrescribeModal(true);
   };
 
@@ -212,6 +214,7 @@ export default function PharmacyPage() {
     e.preventDefault();
     if (!prescribeDrug || !rxForm.visitId) return;
     setPrescribing(true);
+    setPrescribeError(null);
     try {
       await pharmacyApi.createPrescription({
         visitId: Number(rxForm.visitId),
@@ -224,7 +227,10 @@ export default function PharmacyPage() {
       });
       setPrescribeModal(false);
       fetchPrescriptions();
-    } catch { /* handled */ } finally { setPrescribing(false); }
+    } catch (err: unknown) {
+      const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
+      setPrescribeError(msg || 'Failed to create prescription. Please check stock availability.');
+    } finally { setPrescribing(false); }
   };
 
   const openRefundModal = (rx: Prescription) => {
@@ -662,11 +668,29 @@ export default function PharmacyPage() {
               rows={2} placeholder="e.g. Take after meals, avoid alcohol" className={inputClass} />
           </div>
 
+          {prescribeDrug && rxForm.quantityPrescribed > prescribeDrug.quantityInStock && (
+            <div className="flex items-center gap-2 bg-red-50 border border-red-200 rounded-lg px-3 py-2 text-sm text-red-700">
+              <AlertTriangle className="w-4 h-4 flex-shrink-0" />
+              Quantity exceeds available stock ({prescribeDrug.quantityInStock} units). Reduce quantity to proceed.
+            </div>
+          )}
+          {prescribeDrug && prescribeDrug.quantityInStock <= 0 && (
+            <div className="flex items-center gap-2 bg-red-50 border border-red-200 rounded-lg px-3 py-2 text-sm text-red-700">
+              <AlertTriangle className="w-4 h-4 flex-shrink-0" />
+              This drug is out of stock and cannot be prescribed.
+            </div>
+          )}
+          {prescribeError && (
+            <div className="flex items-center gap-2 bg-red-50 border border-red-200 rounded-lg px-3 py-2 text-sm text-red-700">
+              <AlertTriangle className="w-4 h-4 flex-shrink-0" />
+              {prescribeError}
+            </div>
+          )}
           <div className="flex justify-end gap-3 pt-2">
             <button type="button" onClick={() => setPrescribeModal(false)}
               className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200">Cancel</button>
             <button type="submit"
-              disabled={prescribing || !selectedPatient || !rxForm.visitId || !rxForm.dosage || !rxForm.frequency || !rxForm.duration}
+              disabled={prescribing || !selectedPatient || !rxForm.visitId || !rxForm.dosage || !rxForm.frequency || !rxForm.duration || (prescribeDrug !== null && (prescribeDrug.quantityInStock <= 0 || rxForm.quantityPrescribed > prescribeDrug.quantityInStock))}
               className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-50">
               {prescribing ? 'Prescribing...' : 'Create Prescription'}
             </button>

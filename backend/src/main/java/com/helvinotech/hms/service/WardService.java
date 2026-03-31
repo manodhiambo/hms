@@ -28,6 +28,7 @@ public class WardService {
     private final BedRepository bedRepository;
     private final AdmissionRepository admissionRepository;
     private final NursingNoteRepository nursingNoteRepository;
+    private final TreatmentEntryRepository treatmentEntryRepository;
     private final PatientRepository patientRepository;
     private final VisitRepository visitRepository;
     private final UserRepository userRepository;
@@ -175,6 +176,64 @@ public class WardService {
                 .stream().map(this::mapNursingNoteToDto).collect(Collectors.toList());
     }
 
+    // Admission Note
+    @Transactional(readOnly = false)
+    public AdmissionDTO updateAdmissionNote(Long admissionId, String admissionNote) {
+        Long hospitalId = TenantContext.getCurrentHospitalId();
+        Admission admission;
+        if (hospitalId != null) {
+            admission = admissionRepository.findByIdAndHospitalId(admissionId, hospitalId)
+                    .orElseThrow(() -> new ResourceNotFoundException("Admission", admissionId));
+        } else {
+            admission = admissionRepository.findById(admissionId)
+                    .orElseThrow(() -> new ResourceNotFoundException("Admission", admissionId));
+        }
+        admission.setAdmissionNote(admissionNote);
+        return mapAdmissionToDto(admissionRepository.save(admission));
+    }
+
+    public AdmissionDTO getAdmission(Long admissionId) {
+        Long hospitalId = TenantContext.getCurrentHospitalId();
+        Admission admission;
+        if (hospitalId != null) {
+            admission = admissionRepository.findByIdAndHospitalId(admissionId, hospitalId)
+                    .orElseThrow(() -> new ResourceNotFoundException("Admission", admissionId));
+        } else {
+            admission = admissionRepository.findById(admissionId)
+                    .orElseThrow(() -> new ResourceNotFoundException("Admission", admissionId));
+        }
+        return mapAdmissionToDto(admission);
+    }
+
+    // Treatment Sheet
+    @Transactional(readOnly = false)
+    public TreatmentEntryDTO addTreatmentEntry(TreatmentEntryDTO dto) {
+        Long hospitalId = TenantContext.getCurrentHospitalId();
+        Admission admission = admissionRepository.findById(dto.getAdmissionId())
+                .orElseThrow(() -> new ResourceNotFoundException("Admission", dto.getAdmissionId()));
+        TreatmentEntry entry = TreatmentEntry.builder()
+                .admission(admission)
+                .treatmentType(dto.getTreatmentType())
+                .description(dto.getDescription())
+                .dose(dto.getDose())
+                .route(dto.getRoute())
+                .frequency(dto.getFrequency())
+                .scheduledTime(dto.getScheduledTime())
+                .administeredAt(dto.getAdministeredAt())
+                .notes(dto.getNotes())
+                .hospitalId(hospitalId)
+                .build();
+        if (dto.getRecordedById() != null) {
+            entry.setRecordedBy(userRepository.findById(dto.getRecordedById()).orElse(null));
+        }
+        return mapTreatmentEntryToDto(treatmentEntryRepository.save(entry));
+    }
+
+    public List<TreatmentEntryDTO> getTreatmentEntries(Long admissionId) {
+        return treatmentEntryRepository.findByAdmissionIdOrderByCreatedAtDesc(admissionId)
+                .stream().map(this::mapTreatmentEntryToDto).collect(Collectors.toList());
+    }
+
     public long countAvailableBeds() {
         Long hospitalId = TenantContext.getCurrentHospitalId();
         if (hospitalId != null) return bedRepository.countByHospitalIdAndStatus(hospitalId, BedStatus.AVAILABLE);
@@ -243,6 +302,7 @@ public class WardService {
         }
         dto.setStatus(a.getStatus());
         dto.setAdmissionReason(a.getAdmissionReason());
+        dto.setAdmissionNote(a.getAdmissionNote());
         dto.setDischargeSummary(a.getDischargeSummary());
         dto.setAdmittedAt(a.getAdmittedAt());
         dto.setDischargedAt(a.getDischargedAt());
@@ -259,6 +319,26 @@ public class WardService {
         dto.setNotes(n.getNotes());
         dto.setVitalSigns(n.getVitalSigns());
         dto.setCreatedAt(n.getCreatedAt());
+        return dto;
+    }
+
+    private TreatmentEntryDTO mapTreatmentEntryToDto(TreatmentEntry e) {
+        TreatmentEntryDTO dto = new TreatmentEntryDTO();
+        dto.setId(e.getId());
+        dto.setAdmissionId(e.getAdmission().getId());
+        if (e.getRecordedBy() != null) {
+            dto.setRecordedById(e.getRecordedBy().getId());
+            dto.setRecordedByName(e.getRecordedBy().getFullName());
+        }
+        dto.setTreatmentType(e.getTreatmentType());
+        dto.setDescription(e.getDescription());
+        dto.setDose(e.getDose());
+        dto.setRoute(e.getRoute());
+        dto.setFrequency(e.getFrequency());
+        dto.setScheduledTime(e.getScheduledTime());
+        dto.setAdministeredAt(e.getAdministeredAt());
+        dto.setNotes(e.getNotes());
+        dto.setCreatedAt(e.getCreatedAt());
         return dto;
     }
 }

@@ -23,6 +23,7 @@ public class AdmissionDTO {
     private String admittingDoctorName;
     private AdmissionStatus status;
     private String admissionReason;
+    private String admissionNote;
     private String dischargeSummary;
     private LocalDateTime admittedAt;
     private LocalDateTime dischargedAt;

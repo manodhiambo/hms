@@ -1,10 +1,11 @@
 import { useEffect, useState, useCallback } from 'react';
-import { BedDouble, Plus, ChevronDown, ChevronRight } from 'lucide-react';
+import { BedDouble, Plus, ChevronDown, ChevronRight, ClipboardList } from 'lucide-react';
 import { wardApi } from '../../api/services';
 import type { Ward, Room, Bed, Admission } from '../../types';
 import Modal from '../../components/Modal';
 import StatusBadge from '../../components/StatusBadge';
 import DataTable from '../../components/DataTable';
+import BedCardexModal from '../../components/BedCardexModal';
 
 export default function WardsPage() {
   const [tab, setTab] = useState<'wards' | 'beds' | 'admissions'>('wards');
@@ -13,6 +14,7 @@ export default function WardsPage() {
   const [admissions, setAdmissions] = useState<Admission[]>([]);
   const [admPage, setAdmPage] = useState(0);
   const [admTotalPages, setAdmTotalPages] = useState(1);
+  const [cardexAdmission, setCardexAdmission] = useState<Admission | null>(null);
 
   // Ward modal
   const [showWardModal, setShowWardModal] = useState(false);
@@ -116,6 +118,14 @@ export default function WardsPage() {
     { key: 'admittingDoctorName', label: 'Doctor', render: (a: Admission) => a.admittingDoctorName || '-' },
     { key: 'status', label: 'Status', render: (a: Admission) => <StatusBadge status={a.status} /> },
     { key: 'admittedAt', label: 'Admitted', render: (a: Admission) => a.admittedAt ? new Date(a.admittedAt).toLocaleDateString() : '-' },
+    { key: 'actions', label: '', render: (a: Admission) => (
+      <button
+        onClick={() => setCardexAdmission(a)}
+        className="flex items-center gap-1 bg-primary-50 text-primary-700 border border-primary-200 px-3 py-1.5 rounded-lg text-xs font-medium hover:bg-primary-100"
+      >
+        <ClipboardList className="w-3.5 h-3.5" /> Cardex
+      </button>
+    )},
   ];
 
   return (
@@ -190,6 +200,22 @@ export default function WardsPage() {
                                     <StatusBadge status={bed.status} />
                                   </div>
                                   {bed.dailyCharge > 0 && <p className="text-xs text-gray-500 mt-1">KES {bed.dailyCharge}/day</p>}
+                                  {bed.status === 'OCCUPIED' && (
+                                    <button
+                                      onClick={async () => {
+                                        try {
+                                          const adm = admissions.find((a) => a.bedId === bed.id && a.status === 'ADMITTED');
+                                          if (adm) { setCardexAdmission(adm); return; }
+                                          const res = await wardApi.getAdmissions('ADMITTED', 0);
+                                          const found = res.data.data.content.find((a) => a.bedId === bed.id);
+                                          if (found) setCardexAdmission(found);
+                                        } catch { /* handled */ }
+                                      }}
+                                      className="mt-2 w-full flex items-center justify-center gap-1 bg-white border border-red-300 text-red-700 px-2 py-1 rounded text-xs font-medium hover:bg-red-50"
+                                    >
+                                      <ClipboardList className="w-3 h-3" /> Cardex
+                                    </button>
+                                  )}
                                 </div>
                               ))}
                             </div>
@@ -290,6 +316,14 @@ export default function WardsPage() {
           <button type="submit" className="w-full bg-blue-600 text-white py-2 rounded-lg text-sm font-medium hover:bg-blue-700">Create Room</button>
         </form>
       </Modal>
+
+      {cardexAdmission && (
+        <BedCardexModal
+          admission={cardexAdmission}
+          onClose={() => setCardexAdmission(null)}
+          onDischarge={() => { setCardexAdmission(null); refreshData(); loadAdmissions(0); }}
+        />
+      )}
 
       {/* Add Bed Modal */}
       <Modal open={showBedModal} onClose={() => setShowBedModal(false)} title="Add Bed">

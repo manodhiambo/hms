@@ -141,6 +141,13 @@ public class PharmacyService {
         if (prescriptionRepository.existsByVisitIdAndDrugId(dto.getVisitId(), dto.getDrugId())) {
             throw new BadRequestException(drug.getGenericName() + " has already been prescribed for this visit");
         }
+        if (drug.getQuantityInStock() <= 0) {
+            throw new BadRequestException(drug.getGenericName() + " is out of stock");
+        }
+        if (dto.getQuantityPrescribed() != null && dto.getQuantityPrescribed() > drug.getQuantityInStock()) {
+            throw new BadRequestException("Insufficient stock for " + drug.getGenericName() +
+                    ". Available: " + drug.getQuantityInStock() + ", Requested: " + dto.getQuantityPrescribed());
+        }
         Long hospitalId = TenantContext.getCurrentHospitalId();
         Prescription rx = Prescription.builder()
                 .visit(visit)

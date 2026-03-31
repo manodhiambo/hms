@@ -86,4 +86,28 @@ public class WardController {
     public ResponseEntity<ApiResponse<List<NursingNoteDTO>>> getNursingNotes(@PathVariable Long admissionId) {
         return ResponseEntity.ok(ApiResponse.success(wardService.getNursingNotes(admissionId)));
     }
+
+    // Single Admission
+    @GetMapping("/admissions/{id}")
+    public ResponseEntity<ApiResponse<AdmissionDTO>> getAdmission(@PathVariable Long id) {
+        return ResponseEntity.ok(ApiResponse.success(wardService.getAdmission(id)));
+    }
+
+    // Admission Note
+    @PutMapping("/admissions/{id}/admission-note")
+    public ResponseEntity<ApiResponse<AdmissionDTO>> updateAdmissionNote(
+            @PathVariable Long id, @RequestBody Map<String, String> body) {
+        return ResponseEntity.ok(ApiResponse.success(wardService.updateAdmissionNote(id, body.get("admissionNote"))));
+    }
+
+    // Treatment Sheet
+    @PostMapping("/treatment-entries")
+    public ResponseEntity<ApiResponse<TreatmentEntryDTO>> addTreatmentEntry(@Valid @RequestBody TreatmentEntryDTO dto) {
+        return ResponseEntity.ok(ApiResponse.success(wardService.addTreatmentEntry(dto)));
+    }
+
+    @GetMapping("/admissions/{admissionId}/treatment-entries")
+    public ResponseEntity<ApiResponse<List<TreatmentEntryDTO>>> getTreatmentEntries(@PathVariable Long admissionId) {
+        return ResponseEntity.ok(ApiResponse.success(wardService.getTreatmentEntries(admissionId)));
+    }
 }
